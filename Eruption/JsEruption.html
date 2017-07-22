@@ -1,0 +1,114 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+    body {
+        margin: 0px;
+        padding: 0px;
+    }
+    #buttons {
+        position: absolute;
+        top: 5px;
+        left: 10px;
+    }
+    #buttons > input {
+        padding: 10px;
+        display: block;
+		margin-top: 5px;
+    }
+    </style>
+</head>
+<body>
+
+<div id="buttons">
+      <input type="button" id="clear" value="Clear">
+</div>
+<canvas id="Eruption" width="800" height="500" style="border:1px solid #000000;"></canvas>
+
+<script>
+
+var ctx = document.getElementById('Eruption').getContext("2d");
+
+var WIDTH = document.getElementById('Eruption').width;
+var HEIGHT = document.getElementById('Eruption').height;
+
+//Init
+var topp = new Array(101);
+var bott = new Array(101);
+
+var size = 4.0; //The relative size of the image
+var height = 250.0; //The central height of the function
+var da=2, db=2; //For faster animation, set: da=2; db=2
+var decay = 0.0003; //The "taper" of the function's envelope
+
+var t=0.0, dt=0.4;
+var dx = da*size/2.0;
+var factor = size*height/5.0;
+var xc = WIDTH/2, yc = HEIGHT/2;
+
+var ex = 5.0;
+var clearing = 0;
+
+setInterval(update,100);
+
+function update(){
+
+	document.getElementById('clear').addEventListener('click', function() {
+        clearing=1-clearing;
+    }, false);
+	
+	if (clearing==0){
+		ctx.clearRect(0,0,WIDTH,HEIGHT);
+		document.getElementById("Eruption").style.backgroundColor = 'rgba(255,255,255, 1)';
+	}else{
+		document.getElementById("Eruption").style.backgroundColor = 'rgba(0,0,0, 1)';
+	}
+    //Logic
+	t=t+dt;
+	//if (ex>.1){ ex-=.1; }
+	
+	for(n=0;n<=100;n+=da){
+		topp[n]=-999;
+		bott[n]=+999;
+	}
+	
+	for(b=-100;b<=100;b+=db){
+		for(a=0;a<=100;a+=da){
+			rr = a*a+b*b;
+			//if (rr>10000) break;
+			r = Math.sqrt(rr);
+			//z = (b*size)/5.0+factor*Math.cos(r/5.0-t)*Math.exp(-rr*decay);
+			z = (b*size)/ex+factor*Math.cos(r/5.0-t)*Math.exp(-rr*decay);
+			
+			if (z > topp[a]){
+				c = (10*r-50*t)*.005;
+                c1=Math.floor(125+Math.cos(c)*125);
+                c2=Math.floor(125+Math.cos(c*1.15)*125);
+                c3=Math.floor(125+Math.cos(c*1.3)*125);
+				ctx.strokeStyle = "rgb("+c1+","+c2+","+c3+")";
+				
+				ctx.beginPath(); ctx.moveTo(xc+a*size-dx, yc-z); ctx.lineTo(xc+a*size+dx, yc-z); ctx.stroke();
+				ctx.beginPath(); ctx.moveTo(xc-a*size-dx, yc-z); ctx.lineTo(xc-a*size+dx, yc-z); ctx.stroke();
+				topp[a]=z;
+			}
+			if (z < bott[a]){
+				c = (10*r-50*t)*.005;
+                c1=Math.floor(125+Math.cos(c)*125);
+                c2=Math.floor(125+Math.cos(c*1.15)*125);
+                c3=Math.floor(125+Math.cos(c*1.3)*125);
+				ctx.strokeStyle = "rgb("+c1+","+c2+","+c3+")";
+				
+				ctx.beginPath(); ctx.moveTo(xc+a*size-dx, yc-z); ctx.lineTo(xc+a*size+dx, yc-z); ctx.stroke();
+				ctx.beginPath(); ctx.moveTo(xc-a*size-dx, yc-z); ctx.lineTo(xc-a*size+dx, yc-z); ctx.stroke();
+				bott[a]=z;
+			}
+		}
+	}
+
+}
+
+	  
+</script>
+
+</body>
+</html>
