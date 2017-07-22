@@ -1,0 +1,61 @@
+Win(null)[]
+randomize
+
+path=project()+"tileset.bmp"
+imi = open image (path)
+imb = open blt (imi)
+
+playerx=10.0
+playery=10.0
+
+lvl=0
+Text level[100]
+level[0]="0000001000000000000000000000110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+
+Text type[196]
+Do n=0,195
+  type[n]=extract(level[lvl],n,n)
+Loop
+
+
+Do
+  select screen(1)
+  cls
+  key=readkey()
+  
+  ////////Movement
+  If (key=328)
+    Do n=0,195
+      a=playery; playery=a
+      b=playerx; playerx=b
+      If (playery*14+playerx=type[n]) playery=playery-0.2
+    Loop
+  Endif
+  
+
+  If (key=336) playery=playery+0.2
+  If (key=333) playerx=playerx+0.2
+  If (key=331) playerx=playerx-0.2
+
+  ////////Tiles
+  Do n=0,195
+    xx=n%14
+    yy=n/14
+    If (type[n]="0") solidcolor(Green)
+    If (type[n]="1") solidcolor(Brown)
+    solidrectangle(xx*16,yy*16,xx*16+16,yy*16+16)
+  Loop
+  
+  ////////Player
+  solidcolor(White)
+  solidrectangle(playerx*14,playery*14,playerx*14+16,playery*14+16)
+
+  ////////Misc
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(10)
+  If (key=27) Break
+Loop
+
+quit
+

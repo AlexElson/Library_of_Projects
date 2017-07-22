@@ -1,0 +1,91 @@
+Win(null)
+randomize
+Int xx[2500]
+Int yy[2500]
+Int type[2500]
+
+dir=25
+Do n=0,2499
+  xx[n]=(n%50)
+  yy[n]=((n)/50)
+  If (xx[n]>=15 And xx[n]<=35) type[n]=1
+  Else type[n]=0
+Loop
+x=0
+y=0
+z=0
+carx=25*15
+cary=40*15
+score=0
+hp=50
+trackwidth=10
+trackless=0
+
+Do
+  select screen(1)
+  cls
+  key=readkey()
+  readmouse(x,y,z)
+
+  ////////////////Track//////////////////
+
+  ddy=(random(5)-2)
+  dy=dy+ddy
+  If (dy>3) dy=1
+  If (dy<-3) dy=-1
+  dir=dir+dy
+  If (dir<5) dir=5
+  If (dir>45) dir=45
+
+  Do n=2499,0
+    If (n<=49)
+      If (xx[n]>=dir-trackwidth And xx[n]<=dir+trackwidth) type[n]=1
+      Else type[n]=0
+    Endif
+    Else type[n]=type[n-50]
+  Loop
+  Do n=0,2499
+    If (type[n]=0) solidcolor(Darkgreen)
+    If (type[n]=1) solidcolor(Gray)
+    solidrectangle(xx[n]*15,yy[n]*15,xx[n]*15+15,yy[n]*15+15)
+  Loop 
+
+  ////////////Your Dot////////////////////
+  If (z=1 And carx>=15) carx=carx-15
+  If (z=2 And carx<=48*15) carx=carx+15
+  solidcolor(Red)
+  solidrectangle(carx,cary,carx+15,cary+15)
+  If (getpixel(carx+8,cary-1)=Darkgreen) 
+    hp=hp-1
+    If (speed<10) speed=speed+1
+  Endif
+  If (getpixel(carx+8,cary-1)=Black) 
+    hp=hp-1
+    If (speed<10) speed=speed+1
+  Endif
+
+  //////////////Score/Misc////////////////////
+  score=score+1
+  If (trackwidth>2) trackless=trackless+1
+  If (trackwidth>2 And trackless>=300) trackless=0; trackwidth=trackwidth-1
+  tabxy (27, 55);Display "Distance: " 
+  tabxy (37, 55);Display score
+  tabxy (27, 56);Display "Health: " 
+  tabxy (35, 56);Display hp
+  tabxy (27, 53);Display "Control your Dot with the Mouse Buttons, stay on the road!"
+  If (hp<=0) Goto lose
+  If (key=27) Goto exit
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(15)
+Loop
+
+exit:
+quit
+
+lose:
+tabxy (27, 58);Display "Game Over! Press any key to Quit"
+selectscreen(0)
+bitbltscreen(1)
+waitkey()
+quit

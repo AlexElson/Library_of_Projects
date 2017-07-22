@@ -1,0 +1,106 @@
+Ultra[]
+randomize
+Start timer
+lvl=1
+gold=0
+Display "You are level ", lvl,"!"
+waitkey
+exp=0
+hp=50
+weapon=0
+defence=0
+w:x=random (5)+1 
+If (exp>lvl*10) lvl=lvl+1;Display "You grew to Lv ",lvl,"!";exp=0;waitkey
+power=lvl*2+weapon
+n=lvl/2
+If (hp>50+lvl*4)hp=50
+cls
+Display "fight(1)-buy(2)-showhealth(3)-showexp(4)-expneeded(5)-yourlvl(6)-exit(9)"
+Do
+key=keyinint("What would you like to do now?") 
+If (key=1)Break
+If (key=4) Display exp
+If (key=9)quit
+If (key=3)Display hp
+If (key=2)Goto shop
+If (key=5)Display lvl*10-exp
+If (key=6)Display lvl
+Loop
+cls
+Delay (200)
+Do
+If (x=1) Display "You are attacked by Lv ",n," ant!";enemy=lvl;waitkey();exp=exp+2+enemy/2;gold=gold+enemy*2;hp=hp-enemy*2+defence+weapon;Goto thirteen
+If (x=2)Display "You are attacked by Lv ",n," wizard!";enemy=lvl*2;waitkey();exp=exp+4+enemy;gold=gold+enemy*4;hp=hp-enemy*2+defence+weapon;Goto thirteen
+If (x=2) Display "You are attacked by Lv ",n," weak knight!";enemy=lvl;waitkey();exp=exp+2+enemy;gold=gold+enemy*3;hp=hp-enemy*2+defence+weapon;Goto thirteen
+If (x=3) Display "You are attacked by Lv ",n," fly!";enemy=lvl;waitkey();exp=exp+1+enemy/2;gold=gold+enemy*2;hp=hp-enemy+defence+weapon;Goto thirteen
+If (x=4)Display "You are attacked by Lv ",n,"goblin!";enemy=lvl*2;waitkey();exp=exp+2+enemy;gold=gold+enemy*3;hp=hp-enemy*2+defence+weapon;Goto thirteen
+If (x=5) Display "You are ambushed by Lv ",n," weak assassin!";enemy=lvl*2;waitkey();exp=exp+2+enemy;gold=gold+enemy*3;hp=hp-enemy*3+defence+weapon;Goto thirteen
+Loop
+thirteen:If (hp<=0)Display "You lost all of your hp and died in battle...";waitkey;quit
+If (enemy<=power)Display "You beat the enemy!";waitkey;Display "You now have ", exp," exp!   You now have ",gold," gold!     You have ",hp," hp left!";waitkey;Goto w
+If (enemy>power)Display "You died in battle...";waitkey();quit
+
+shop:cls
+Display "Welcome to the shop!"
+Delay (1500)
+cls
+Display "What would you like to buy?"
+forecolor (Red)
+Display "-Weapons-"
+forecolor (15)
+Display "dagger-50 gold     bow and arrow-100 gold"
+Display "zantenzuken sword-150 gold     hero's sword-250 gold"
+forecolor (Red)
+Display "-Potions-"
+forecolor (15)
+Display "minor heal-25 gold     major heal-50 gold"
+Display "max heal-100 gold     instant level up-500 gold"
+forecolor (Red)
+Display "-Defence-"
+forecolor (15)
+Display "wooden shield-30 gold     iron shield-60 gold"
+Display "steel mail-150 gold     titanium armor-300 gold"
+Display "                   "
+Display "You have this much gold:"       
+Display gold
+Display "Type -exit- to exit the shop"
+z=keyintext()
+If (z="dagger" And gold>=50)weapon=3;gold=gold-50;Goto shop
+If (z="bow and arrow" And gold>=100)weapon=6;gold=gold-100;Goto shop
+If (z="zantenzuken sword" And gold>=150)weapon=8;gold=gold-150;Goto shop
+If (z="hero's sword" And gold>=250)weapon=13;gold=gold-250;Goto shop
+If (z="minor heal" And gold>=25)hp=hp+40;gold=gold-25;Goto shop
+If (z="major heal" And gold>=50)hp=hp+80;gold=gold-50;Goto shop
+If (z="max heal" And gold>=100)hp=hp+140;gold=gold-100;Goto shop
+If (z="instant level up" And gold>=400)lvl=lvl+1-500;exp=0;Goto shop
+If (z="wooden shield" And gold>=30)defence=3;gold=gold-30;Goto shop
+If (z="iron shield" And gold>=60)defence=5;gold=gold-60;Goto shop
+If (z="steel mail" And gold>=150)defence=9;gold=gold-150;Goto shop
+If (z="titanium armor" And gold>=300)defence=14;gold=gold-300;Goto shop
+If (z="exit")Goto w
+If (z="dagger" And gold<50)Display "not enough money...";Delay (1500);Goto shop
+If (z="bow and arrow" And gold<100)Display "not enough money...";Delay (1500);Goto shop
+If (z="zantenzuken sword" And gold<150)Display "not enough money...";Delay (1500);Goto shop
+If (z="hero's sword" And gold<250)Display "not enough money...";Delay (1500);Goto shop
+If (z="minor heal" And gold<25)Display "not enough money...";Delay (1500);Goto shop
+If (z="major heal" And gold<50)Display "not enough money...";Delay (1500);Goto shop
+If (z="max heal" And gold<100)Display "not enough money...";Delay (1500);Goto shop
+If (z="instant level up" And gold<400)Display "not enough money...";Delay (1500);Goto shop
+If (z="wooden shield" And gold<30)Display "not enough money...";Delay (1500);Goto shop
+If (z="iron shield" And gold<60)Display "not enough money...";Delay (1500);Goto shop
+If (z="steel mail" And gold<150)Display "not enough money...";Delay (1500);Goto shop
+If (z="titanium armor" And gold<300)Display "not enough money...";Delay (1500);Goto shop
+Goto shop
+
+
+
+
+
+
+
+
+
+
+
+
+

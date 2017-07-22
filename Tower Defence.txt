@@ -1,0 +1,263 @@
+Win(null)
+//open screen(1)
+Int xx[150],yy[150]
+Int bx[150],by[150]
+Int dx[150],dy[150]
+Do a=0,149
+  dx[a]=1
+  dy[a]=1
+  bx[a]=1
+  by[a]=1
+  xx[a]=1
+  yy[a]=1
+Loop
+placed=0
+cooldown=0
+tn=1
+tb=1
+tbt=1
+td=1
+a=1
+aa=1
+a2=5
+e=0
+r=0
+t=0
+money=500
+prepmoney=0
+towerselect=3
+mx=0
+my=0
+mz=0
+f=0
+b=0.0
+c=0.0
+ccx=0
+ccy=0
+ccc=1000
+alldead=0
+round=1
+tex=220
+tey=0-15
+ted=1
+txx=1
+tyy=1
+towerhealth=10
+Int eside[200]
+Do a=0,199
+  eside[a]=1
+Loop
+Int eh[200]
+Int ea[200]
+Int ex[200],ey[200]
+Do a=0,199
+  ea[a]=0
+  eh[a]=100
+  ex[a]=1
+  ey[a]=1
+Loop
+Do a=0,199
+  ex[a]=220
+  ey[a]=0-30*a
+Loop
+de=20
+wth=money
+
+Display " You have $500 to start out with. Left click anywhere on the map to place a tower."
+Display " You can select different towers from the inventory at the side. Just click one of the towers in it to select that tower."
+Display " The blue tower is the Lazer Tower. It shoots a lazer to the closest enemy in range. It costs $150 to place"
+Display " The black tower is the Blocking Tower. It, like the blue tower, blocks the enemies from passing and recreates a route. It does not attack however. $40 to place"
+Display " The orange tower is the Damage Tower. It does not block enemies, but deals damage whenever enemies pass through it. $100 to place."
+Display " If 10 enemies get to your base(light blue square), then you lose the game."
+Display " Every round, more enemies come and their health increases."
+Display " Press the mouse scroll wheel to change game speed."
+Display " "
+Display " Press any key to play..."
+
+waitkey()
+
+open screen(1)
+Do
+  select screen(1)
+  n:cls
+  readmouse(mx,my,mz)
+  solidcolor(Gray)
+  solidrectangle(62,180,388,600)
+  solidrectangle(420,240,500,400)
+  solidcolor(Blue)
+  solidrectangle(460-14,270-14,460+14,270+14)
+  solidcolor(Black)
+  solidrectangle(460-14,320-14,460+14,320+14)
+  solidcolor(Darkyellow)
+  solidrectangle(460-14,370-14,460+14,370+14)
+  //////////////Tower Selection//////////////////
+  If (mz=1 And mx>401)
+    If (getpixel(mx,my)=Blue) towerselect=3
+    If (getpixel(mx,my)=Black) towerselect=2
+    If (getpixel(mx,my)=Darkyellow) towerselect=1
+  Endif
+  /////////////////ENEMYS SHOW///////////////////
+  Do a=1,a2  
+    solidcolor(Darkgreen)
+    If (eh[a]>=1) solidcircle(ex[a],ey[a],5)
+    Else alldead=alldead+1
+  Loop
+  ///////////////LAZER TOWER- LAZERS/////////////
+  solidcolor(Black)
+  solidrectangle(0,0,390,180)
+  solidcolor(3)
+  solidrectangle(215,600,235,620)
+  solidcolor(Blue)
+  Do a=0,149
+    If (xx[a]>1 And xx[a]<xpixels() And yy[a]>1 And yy[a]<ypixels())
+      solidrectangle(xx[a]-14,yy[a]-14,xx[a]+14,yy[a]+14)
+      color(Red)
+      ccc=1000; c=0
+      Do a1=1,a2
+        f=ex[a1]-xx[a]
+        b=ey[a1]-yy[a]
+        c=sqrt(f*f + b*b)
+        If (c<ccc) ccc=c; ccx=ex[a1]; ccy=ey[a1]
+      Loop
+      If (ccx>xx[a]-75 And ccx<xx[a]+75 And ccy<yy[a]+75 And ccy>yy[a]-75) 
+        line(xx[a],yy[a],ccx,ccy)
+        Do aa=1,a2
+          If (ccx=ex[aa] And ccy=ey[aa]) ea[aa]=ea[aa]+1
+        Loop
+      Endif
+    Endif
+  Loop
+  solidcolor(Black)
+  //////////////OTHER TOWER PLACEMENT//////////
+  Do a=0,149
+    solidcolor(Black)
+    solidrectangle(bx[a]-14,by[a]-14,bx[a]+14,by[a]+14)
+    solidcolor(Darkyellow)
+    solidrectangle(dx[a]-14,dy[a]-14,dx[a]+14,dy[a]+14)
+  Loop
+  //////////PASSABLE DAMAGE TOWER//////////////
+  If (mz=1 And cooldown<=0 And getpixel(mx,my)=Gray And towerselect=1 And mx<400) 
+    If (money>=100)
+      txx=mx/30
+      txx=txx*30
+      tyy=my/30
+      tyy=tyy*30
+      cooldown=5
+      dx[td]=mxx+15
+      dy[td]=myy+15
+      td=td+1
+      money=money-100
+    Endif
+    Else cooldown=5
+  Endif
+  ////////BLACK BLOCK TOWER///////////////////
+  If (mz=1 And cooldown<=0 And getpixel(mx,my)=Gray And towerselect=2 And mx<400) 
+    If (money>=40)
+      txx=mx/30
+      txx=txx*30
+      tyy=my/30
+      tyy=tyy*30
+      solidcolor(Black)
+      solidrectangle(txx+1,tyy+1,txx+29,tyy+29)
+      Do a=0,40000
+        //select screen(1)
+        If (getpixel(tex,tey+6)=3)  tex=220; tey=0-15; ted=1; Break
+        If ((getpixel(tex-6,tey+6)=Blue) Or (getpixel(tex+6,tey+6)=Blue)) tex=tex+ted 
+        Else tey=tey+1
+        If (((getpixel(tex-6,tey+6)=Black) Or (getpixel(tex+6,tey+6)=Black)) And tey>186) tey=tey-1; tex=tex+ted
+        If ( (((getpixel(tex-6,tey)=0) Or (getpixel(tex+6,tey)=0)) And tey>184) Or ((getpixel(tex-6,tey)=Blue) Or (getpixel(tex+6,tey)=Blue))) ted=-ted
+        readquitkey(27)
+        //solidcolor(Darkgreen)
+        //solidcircle(tex,tey,5)
+        If (a=40000) tex=220; tey=0-15;cooldown=15;ted=1;Goto n
+        //selectscreen(0)
+        //bitbltscreen(1)
+      Loop
+      cooldown=5
+      bx[tbt]=mxx+15
+      by[tbt]=myy+15
+      tbt=tbt+1
+      money=money-40
+    Endif
+    Else cooldown=5
+  Endif
+  /////////LAZER TOWER//////////////////////
+  If (mz=1 And cooldown<=0 And getpixel(mx,my)=Gray And towerselect=3 And mx<400) 
+    If (money>=150)
+      txx=mx/30
+      txx=txx*30
+      tyy=my/30
+      tyy=tyy*30
+      solidcolor(Blue)
+      solidrectangle(txx+1,tyy+1,txx+29,tyy+29)
+      Do a=0,40000
+        If (getpixel(tex,tey+6)=3) tex=220; tey=0-15; ted=1; Break
+        If ((getpixel(tex-6,tey+6)=Blue) Or (getpixel(tex+6,tey+6)=Blue)) tex=tex+ted 
+        Else tey=tey+1
+        If (((getpixel(tex-6,tey+6)=Black) Or (getpixel(tex+6,tey+6)=Black)) And tey>184) tey=tey-1; tex=tex+ted
+        If ( (((getpixel(tex-6,tey)=0) Or (getpixel(tex+6,tey)=0)) And tey>184) Or ((getpixel(tex-6,tey)=Blue) Or (getpixel(tex+6,tey)=Blue))) ted=-ted
+        readquitkey(27)
+        If (a=40000) tex=220; tey=0-15;cooldown=15;ted=1;Goto n
+      Loop
+      cooldown=5
+      xx[tn]=mxx+15
+      yy[tn]=myy+15
+      tn=tn+1
+      money=money-150
+    Endif
+    Else cooldown=5
+  Endif
+  cooldown=cooldown-1  
+  ////////////////////////ENEMYS STATS//////////
+  Do a=1,a2
+    If (getpixel(ex[a],ey[a])=Darkyellow) ea[a]=ea[a]+2
+    If (getpixel(ex[a],ey[a])=3) eh[a]=-9999; ex[a]=1; ey[a]=1; towerhealth=towerhealth-1
+    If (ea[a]>=1 And eh[a]>=1) eh[a]=eh[a]-ea[a]
+    If (eh[a]<=0 And eh[a]>-9998) money=money+15; eh[a]=-9999
+    If (eh[a]<=0) ex[a]=1; ey[a]=1
+    If ((getpixel(ex[a]-6,ey[a]+6)=Blue) Or (getpixel(ex[a]+6,ey[a]+6)=Blue)) ex[a]=ex[a]+eside[a] 
+    Else ey[a]=ey[a]+1
+    If (((getpixel(ex[a]-6,ey[a]+6)=Black) Or (getpixel(ex[a]+6,ey[a]+6)=Black)) And ey[a]>184) ey[a]=ey[a]-1; ex[a]=ex[a]+eside[a]
+    If ( (((getpixel(ex[a]-6,ey[a])=0) Or (getpixel(ex[a]+6,ey[a])=0)) And ey[a]>184) Or ((getpixel(ex[a]-6,ey[a])=Blue) Or (getpixel(ex[a]+6,ey[a])=Blue))) eside[a]=-eside[a]
+    ea[a]=0
+  Loop
+  /////////////////MOUSE SQUARES////////////////
+  color(Yellow)
+  mxx=mx; myy=my
+  mxx=mxx/30; myy=myy/30
+  mxx=mxx*30; myy=myy*30
+  rectangle(mxx,myy,mxx+30,myy+30)
+  //////////////////////////////////////////////
+  key=readkey()
+  If (key=27) Goto q
+  money=money
+  Display "Tower Health:"
+  Display towerhealth
+  Display "Money:"
+  Display money
+  Display "Round:"
+  Display round
+  If (towerhealth<=0) Display "YOU LOST!"; Delay(2000); Goto q
+  If (alldead>=a2)
+    round=round+1
+    a2=a2+1
+    Do a=1,a2-1
+      eside[a]=1
+      eh[a]=100+55*(a2-7)
+      ex[a]=220
+      ey[a]=0-30*a
+    Loop
+  Endif 
+  alldead=0
+  If (mz=4)
+    If (de=1) de=25
+    de=de-5
+    If (de<=0) de=1
+    Delay(200)
+  Endif 
+  Delay(de)
+  selectscreen(0)
+  bitbltscreen(1)
+Loop
+q:close screen(1)
+quit

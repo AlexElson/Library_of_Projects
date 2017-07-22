@@ -1,0 +1,3419 @@
+Win(null)[Left Field Hotel]800x600
+
+dd=0
+Do n=0,255 ////////Beginning Text
+  forecolor(rgb(n,n,n))
+  Outtextxy(400-128,280,"Left Field Hotel",2^5)
+  Outtextxy(400-64,315,"January 27, 1971",2^3)
+  key=readkey()
+  If (key=27 Or key=48) dd=1; Break
+  Delay(10)
+Loop
+If (dd=0)
+Do n=0,255 ////////Beginning Text 2
+  forecolor(rgb(255-n,255-n,255-n))
+  Outtextxy(400-128,280,"Left Field Hotel",2^5)
+  Outtextxy(400-64,315,"January 27, 1971",2^3)
+  key=readkey()
+  If (key=27 Or key=48) dd=0; Break
+  Delay(10)
+Loop
+Endif
+
+randomize
+path=project()+"Resources\\tileset.bmp"
+imi = open image (path)
+imb = open blt (imi)
+
+path=project()+"Resources\\"
+characters=open sticker strip (path+"char",3)
+itemtiles=open sticker strip (path+"itemtiles",17)
+wind=open mci(path+"wind.wav")
+tvstatic=open mci(path+"tvstatic.wav")
+draweropen=open mci(path+"draweropen.wav")
+suspense=open mci(path+"suspense.mp3")
+horrorambiance=open mci(path+"horrorambiance.mp3")
+doorclose=open mci(path+"doorclose.mp3")
+switch=open mci(path+"switch.mp3")
+bang=open mci(path+"bang.wav")
+badguilt=open mci(path+"badguilt.wav")
+goodguilt=open mci(path+"goodguilt.wav")
+cycle mci (wind)
+
+Int type[8100]
+Int shadow[8100]
+
+Int itemx[200]
+Int itemy[200]
+Text item[200]
+Do n=0,199
+  itemx[n]=-1
+  itemy[n]=-1
+  item[n]=""
+Loop
+
+Int npcx[50]
+Int npcy[50]
+Int npcpath[50]
+Text npc[50]
+Do n=0,49
+  npcx[n]=-1
+  npcy[n]=-1
+  npcpath[n]=-1
+  npc[n]=""
+Loop
+
+Text inv[6]
+Do n=0,5
+  inv[n]=""
+Loop
+
+addnews=""
+Text news[6]
+Do n=0,5
+  news[n]=""
+Loop
+
+alive=1
+view=1
+turn=0
+oldturn=0
+partstatus=0
+amwait=0
+randommove=0
+floor=8
+ground=0
+matchtime=0
+blight=0
+doorhp=10
+asleep=0
+dseen=0
+qseen=0
+qfound=0
+qpos=0
+qsearch=0
+qleaving=0
+qspawn=60
+fcharge=100
+downstair=0
+elevtime=15
+elevcon=0
+newspaper=0
+washed=0
+guilt=50; guilt2=100; nowguilt=0
+exguilt=0
+indark=0
+wiferoom=0
+suicidego=0
+grassend=0
+badg=0
+goodg=0
+alwaysdying=0
+
+hint="Press <e> To Hold Inventory Items"
+hintsenabled=1
+hintuse=1
+hintused=1
+hintusepaper=1
+hintpick=1
+hintdrop=1
+hinthide=1
+hintsuicide=1
+hintthrow=1
+hintoperate=1
+hintbreak=1
+hintaction=1
+hintportrait=1; hportrait=60
+hintbloodhands=1; hbloodhands=60
+hinttime=15
+
+wa=-1
+waa=-1
+
+////////////Body Parts
+//Misc
+bleeding=0
+bloodloss=0
+oxygen=0
+pain=0
+dizzy=0
+sick=0
+deathtime=0
+
+breathheld=0
+fainted=0
+bloodaround=0
+
+//Head
+forehead=120; forehead2=forehead
+neck=100; neck2=neck
+mouth=80; mouth2=mouth
+nose=50; nose2=nose
+righttemple=50; righttemple2=righttemple
+lefttemple=50; lefttemple2=lefttemple
+righteye=25; righteye2=righteye
+lefteye=25; lefteye2=lefteye
+rightear=30; rightear2=rightear
+leftear=30; leftear2=leftear
+
+neckb=0
+trachea=0
+skull=0
+jaw=0
+brain=0
+nosecon=0
+righttemplecon=0
+lefttemplecon=0
+righteyecon=0
+lefteyecon=0
+rightearcon=0
+leftearcon=0
+
+//Torso
+uppertorso=100; uppertorso2=uppertorso
+lowertorso=100; lowertorso2=lowertorso
+back=100; back2=back
+heart=0
+lungs=0
+ribs=0
+gut=0
+liver=0
+stomach=0
+spine=0
+
+//Arms
+rightarm=60; rightarm2=rightarm
+righthand=40; righthand2=righthand
+leftarm=60; leftarm2=leftarm
+lefthand=40; lefthand2=lefthand
+
+rightarmb=0
+righthandb=0
+leftarmb=0
+lefthandb=0
+
+rightarmcon=0
+righthandcon=0
+leftarmcon=0
+lefthandcon=0
+
+righthanditem="Hand"
+lefthanditem="Hand"
+
+//Legs
+rightleg=60; rightleg2=rightleg
+rightfoot=40; rightfoot2=rightfoot
+leftleg=60; leftleg2=leftleg
+leftfoot=40; leftfoot2=leftfoot
+
+rightlegb=0
+rightfootb=0
+leftlegb=0
+leftfootb=0
+
+rightlegcon=0
+rightfootcon=0
+leftlegcon=0
+leftfootcon=0
+
+stance="Standing"
+
+/////////////////////////////Reset Map
+resetmap:
+Do n=0,8099
+  type[n]=1
+  shadow[n]=0
+Loop
+Do n=0,199
+  itemx[n]=-1
+  itemy[n]=-1
+  item[n]=""
+Loop
+Do n=0,49
+  npc[n]=""
+Loop
+qseen=0
+qfound=0
+qpos=0
+qsearch=0
+qleaving=0
+qspawn=60
+
+//////////////////////////////Generate Area
+startx=60; starty=60
+
+roomx=20 ///Big Room
+roomy=20
+roomxl=18
+roomyl=50
+Do mx=0,roomxl
+  Do my=0,roomyl
+    type[roomx+roomy*90+mx+my*90]=0	
+  Loop
+Loop
+playerx=roomx+roomxl/2
+playery=roomy+1
+
+side=random(3)+11; side2=0  ///Hallways
+Do dis=0,roomyl
+  type[roomx+roomxl/2+1+roomy*90+dis*90-2]=1 //Wall
+  type[roomx+roomxl/2+1+roomy*90+dis*90-1]=5 //Floor 2
+  type[roomx+roomxl/2+1+roomy*90+dis*90+0]=5 //Floor 2
+  type[roomx+roomxl/2+1+roomy*90+dis*90+1]=1 //Wall
+  If (side=side2)
+    Do disx=0,roomxl
+      If (type[roomx+disx+roomy*90+dis*90-90*2]!=5)
+        type[roomx+disx+roomy*90+dis*90-90*4]=1 //Wall
+        type[roomx+disx+roomy*90+dis*90-90*3]=5 //Floor 2
+        type[roomx+disx+roomy*90+dis*90-90*2]=5 //Floor 2
+        type[roomx+disx+roomy*90+dis*90-90*1]=1 //Wall
+      Endif
+    Loop
+    side2=0
+  Endif
+  If (side2=side/2-2)
+    type[roomx+roomxl/2+1+roomy*90+dis*90-2]=2 //Door
+    type[roomx+roomxl/2+1+roomy*90+dis*90+1]=2 //Door
+  Endif
+  side2=side2+1
+Loop 
+
+bathplace=random(6)
+stairplace=random(6)
+elevplace=random(6)
+If (stairplace=bathplace) stairplace=stairplace+1
+If (elevplace=stairplace Or elevplace=bathplace) elevplace=elevplace+1
+If (elevplace=stairplace Or elevplace=bathplace) elevplace=elevplace+1
+
+Do nnn=0,20
+roomtype=0
+If (nnn=bathplace) roomtype=1
+If (nnn=stairplace) roomtype=2
+If (nnn=elevplace) roomtype=3
+If (roomtype=3 And guilt>10) roomtype=0 
+
+If (roomtype=1) /////////////////////////////Bathroom
+Do n=0,8099
+  If (type[n]=0 And shadow[n]=0) 
+    shadow[n]=2 
+    Do m=0,8099
+      If (shadow[m]=0 And type[m]=0 And (shadow[m+1]=2 Or shadow[m-1]=2 Or shadow[m+90]=2 Or shadow[m-90]=2))
+        shadow[m]=2
+      Endif
+    Loop
+
+    ///////Change Tiles to Bathroom Tiles
+    Do m=0,8099
+      If (shadow[m]=2) type[m]=22
+    Loop
+    
+    ///////////Bathroom Room Walls
+    Do m=0,8099
+      If (type[m]=2 And (shadow[m+1]=2 Or shadow[m-1]=2))
+        broomx=random(3)+4
+        broomy=random(3)+4
+        Do bx=0,broomx
+          Do by=0,broomy
+            If (shadow[m+1]>=2)
+              If ((bx=0 Or bx=broomx Or by=0 Or by=broomy) And type[m+bx+by*90-90*(broomy/2)]=22) type[m+bx+by*90-90*(broomy/2)]=1
+              shadow[m+bx+by*90-90*(broomy/2)]=3
+            Endif
+            If (shadow[m-1]>=2)
+              If ((bx=0 Or bx=broomx Or by=0 Or by=broomy) And type[m+bx+by*90-90*(broomy/2)-broomx]=22) type[m+bx+by*90-90*(broomy/2)-broomx]=1
+              shadow[m+bx+by*90-90*(broomy/2)-broomx]=3
+            Endif
+          Loop
+        Loop
+        Break
+      Endif 
+    Loop
+
+    //////////////////////////////Bathroom Wall Lights
+    Do nn=0,0
+      find=0
+      Do n=0,8099
+        If (type[n]=1)
+          If ((shadow[n+1]=3 And type[n-1]=22) Or (shadow[n-1]=3 And type[n+1]=22) Or (shadow[n+90]=3 And type[n-90]=22) Or (shadow[n-90]=3 And type[n+90]=22)) find=find+1 
+        Endif
+      Loop
+      find2=random(find)+1; find=0 
+      Do n=0,8099
+        If (type[n]=1)
+          If ((shadow[n+1]=3 And type[n-1]=22) Or (shadow[n-1]=3 And type[n+1]=22) Or (shadow[n+90]=3 And type[n-90]=22) Or (shadow[n-90]=3 And type[n+90]=22)) find=find+1 
+        Endif
+        If (find=find2) 
+          type[n]=30
+          Break
+        Endif
+      Loop      
+    Loop    
+
+    ////////////////////////////Toilets (Up to 1)/////Bathtub (Up to 1) /////Trashcan (Up to 1)///////Sink (Up to 2)
+    times=random(2)+3
+    Do nn=0,times
+      find=0
+      Do n=0,8099
+        If (type[n]=22 And shadow[n]=3)
+          If (type[n+1]=1 Or type[n+90]=1 Or type[n-1]=1 Or type[n-90]=1) 
+            If (type[n+90+1]!=30 And type[n+90-1]!=30 And type[n-90+1]!=30 And type[n-90-1]!=30)find=find+1
+          Endif
+        Endif
+      Loop
+      find2=random(find)+1; find=0 
+      Do n=0,8099
+        If (type[n]=22 And shadow[n]=3)
+          If (type[n+1]=1 Or type[n+90]=1 Or type[n-1]=1 Or type[n-90]=1) 
+            If (type[n+90+1]!=30 And type[n+90-1]!=30 And type[n-90+1]!=30 And type[n-90-1]!=30)find=find+1
+          Endif
+        Endif
+        If (find=find2) 
+          If (nn=0) type[n]=23
+          If (nn=1) type[n]=24
+          If (nn=2) type[n]=27
+          If (nn=3) type[n]=28
+          If (nn=4) type[n]=28
+          Break
+        Endif
+      Loop      
+    Loop
+
+    Do m=0,8099
+      If (shadow[m]=2 And type[m]=22) type[m]=1
+      If (shadow[m]=2 Or shadow[m]=3) shadow[m]=4
+    Loop   
+
+    Break
+  Endif
+Loop
+Endif
+
+If (roomtype=2) ////////////////////////////////////Stairwell
+Do n=0,8099
+  If (type[n]=0 And shadow[n]=0) 
+    shadow[n]=2
+    Do m=0,8099
+      If (shadow[m]=0 And type[m]=0 And (shadow[m+1]=2 Or shadow[m-1]=2 Or shadow[m+90]=2 Or shadow[m-90]=2))
+        shadow[m]=2
+      Endif
+    Loop
+    
+    ///////Change Tiles to Metal Tiles
+    Do m=0,8099
+      If (shadow[m]=2) type[m]=26
+    Loop
+    
+    ///////////Stair Room Walls
+    Do m=0,8099
+      If (type[m]=2 And (shadow[m+1]=2 Or shadow[m-1]=2))
+        broomx=6
+        broomy=6
+        Do bx=0,broomx
+          Do by=0,broomy
+            If (shadow[m+1]>=2)
+              If ((bx=0 Or bx=broomx Or by=0 Or by=broomy) And (type[m+bx+by*90-90*(broomy/2)]=26 Or type[m+bx+by*90-90*(broomy/2)]=1)) type[m+bx+by*90-90*(broomy/2)]=1
+              shadow[m+bx+by*90-90*(broomy/2)]=3
+            Endif
+            If (shadow[m-1]>=2)
+              If ((bx=0 Or bx=broomx Or by=0 Or by=broomy) And (type[m+bx+by*90-90*(broomy/2)-broomx]=26 Or type[m+bx+by*90-90*(broomy/2)-broomx]=1)) type[m+bx+by*90-90*(broomy/2)-broomx]=1
+              shadow[m+bx+by*90-90*(broomy/2)-broomx]=3
+            Endif
+            If (bx>1 And bx<broomx-1 And by>1 And by<broomy-1 And type[m+bx+by*90-90*(broomy/2)]=26)
+              type[m+bx+by*90-90*(broomy/2)]=33
+            Endif
+            If (bx>1 And bx<broomx-1 And by>1 And by<broomy-1 And type[m+bx+by*90-90*(broomy/2)-broomx]=26)
+              type[m+bx+by*90-90*(broomy/2)-broomx]=33
+            Endif
+          
+            ///////////////////Stair Tiles
+            If (type[m-1]=26 And type[m]=2)
+              type[m-5-90]=34
+              type[m-5]=33
+              type[m-5+90]=35
+            Endif
+            If (type[m+1]=26 And type[m]=2)
+              type[m+5-90]=34
+              type[m+5]=33
+              type[m+5+90]=35
+            Endif
+          Loop
+        Loop
+        Break
+      Endif
+    Loop
+    
+    Do m=0,8099
+      If (shadow[m]=2 And (type[m]=26 Or type[m]=33)) type[m]=1
+      If (shadow[m]=2 Or shadow[m]=3) shadow[m]=4
+    Loop   
+    
+    Break
+  Endif
+Loop
+Endif
+
+If (roomtype=3) //////////////////////////////////////Elevator
+Do n=0,8099
+  If (type[n]=0 And shadow[n]=0)
+    shadow[n]=2 
+    Do m=0,8099
+      If (shadow[m]=0 And type[m]=0 And (shadow[m+1]=2 Or shadow[m-1]=2 Or shadow[m+90]=2 Or shadow[m-90]=2))
+        shadow[m]=2
+      Endif
+    Loop
+    
+    ///////Change Tiles to Elevator Floor
+    Do m=0,8099
+      If (shadow[m]=2) type[m]=36
+    Loop
+    
+    ///////////Elevator Walls
+    Do m=0,8099
+      If (type[m]=2 And (shadow[m+1]=2 Or shadow[m-1]=2))
+        broomx=4
+        broomy=4
+        Do bx=0,broomx
+          Do by=0,broomy
+            If (shadow[m+1]>=2)
+              If ((bx=0 Or bx=broomx Or by=0 Or by=broomy) And (type[m+bx+by*90-90*(broomy/2)]=36 Or type[m+bx+by*90-90*(broomy/2)]=1)) type[m+bx+by*90-90*(broomy/2)]=37
+              shadow[m+bx+by*90-90*(broomy/2)]=3
+            Endif
+            If (shadow[m-1]>=2)
+              If ((bx=0 Or bx=broomx Or by=0 Or by=broomy) And (type[m+bx+by*90-90*(broomy/2)-broomx]=36 Or type[m+bx+by*90-90*(broomy/2)-broomx]=1)) type[m+bx+by*90-90*(broomy/2)-broomx]=37
+              shadow[m+bx+by*90-90*(broomy/2)-broomx]=3
+            Endif
+          Loop
+        Loop
+        dd=random(2)
+        If (dd=0) type[m-90]=40
+        If (dd=1) type[m+90]=40
+        type[m]=38
+        Break
+      Endif
+    Loop
+
+    Do m=0,8099
+      If (shadow[m]=2 And type[m]=36) type[m]=1
+      If (shadow[m]=2 Or shadow[m]=3) shadow[m]=4
+    Loop   
+    
+    Break
+  Endif
+Loop
+Endif
+
+If (roomtype=0) //////////////////////////////Apartment
+Do n=0,8099
+  If (type[n]=0 And shadow[n]=0) 
+
+    ///////////////Fill Impossible Rooms
+    shadow[n]=1; dd=0
+    Do
+      ddd=0
+      Do m=0,8099
+        If ((type[m]=0 Or type[m]=2) And shadow[m]=0)
+          If (shadow[m+1]=1 Or shadow[m-1]=1 Or shadow[m+90]=1 Or shadow[m-90]=1) 
+            shadow[m]=1; ddd=1
+            If (type[m]=2) dd=1
+          Endif
+        Endif
+      Loop
+      If (ddd=0) Break
+    Loop
+    Do m=0,8099
+      If (dd=0 And shadow[m]=1) type[m]=1
+      If (shadow[m]=1) shadow[m]=0
+    Loop 
+
+    shadow[n]=2   //////Extra Room
+    Do m=0,8099
+      If (shadow[m]=0 And type[m]=0 And (shadow[m+1]=2 Or shadow[m-1]=2 Or shadow[m+90]=2 Or shadow[m-90]=2))
+        shadow[m]=2
+      Endif
+    Loop
+
+    extraroom=random(3)
+    If (extraroom!=0)
+    find=0
+    Do m=0,8099
+      If (type[m]=1 And ((shadow[m+1]=2 And shadow[m+1+90*3]=2 And shadow[m+1-90*3]=2) Or (shadow[m-1]=2 And shadow[m-1+90*3]=2 And shadow[m-1-90*3]=2)))
+        find=find+1
+      Endif
+    Loop
+    find2=random(find)+1; find=0
+    Do m=0,8099
+      If (type[m]=1 And ((shadow[m+1]=2 And shadow[m+1+90*3]=2 And shadow[m+1-90*3]=2) Or (shadow[m-1]=2 And shadow[m-1+90*3]=2 And shadow[m-1-90*3]=2)))
+        find=find+1
+        If (find=find2) shadow[m]=2; wx=m; Break
+      Endif
+    Loop    
+
+    find=0
+    Do m=0,8099
+      If (type[m]=1 And ((shadow[m+90]=2 And shadow[m+90+2]=2 And shadow[m+90-2]=2) Or (shadow[m-90]=2 And shadow[m-90+2]=2 And shadow[m-90-2]=2)))
+        find=find+1
+      Endif
+    Loop
+    find2=random(find)+1; find=0
+    Do m=0,8099
+      If (type[m]=1 And ((shadow[m+90]=2 And shadow[m+90+2]=2 And shadow[m+90-2]=2) Or (shadow[m-90]=2 And shadow[m-90+2]=2 And shadow[m-90-2]=2)))
+        find=find+1
+        If (find=find2) shadow[m]=2; wy=m; Break
+      Endif
+    Loop  
+    
+    sx=iabs((wy%90)-(wx%90))  ///////Extra Room Walls
+    Do wxx=1,sx
+      If (shadow[wx-1]=0) type[wx+wxx]=1; shadow[wx+wxx]=3
+      If (shadow[wx+1]=0) type[wx-wxx]=1; shadow[wx-wxx]=3
+    Loop
+    sy=iabs((wx/90)-(wy/90))
+    Do wyy=1,sy
+      If (shadow[wy-90]=0) type[wy+wyy*90]=1; shadow[wy+wyy*90]=3
+      If (shadow[wy+90]=0) type[wy-wyy*90]=1; shadow[wy-wyy*90]=3
+    Loop
+
+    Endif
+ 
+    //////////Lamps (Up to 2)
+    times=random(2)
+    Do nn=0,times
+      find=0
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If ((type[n+1]=1 And type[n+90]=1) Or (type[n+1]=1 And type[n-90]=1)) find=find+1
+          If ((type[n-1]=1 And type[n+90]=1) Or (type[n-1]=1 And type[n-90]=1)) find=find+1
+        Endif
+      Loop
+      find2=random(find)+1; find=0 
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If ((type[n+1]=1 And type[n+90]=1) Or (type[n+1]=1 And type[n-90]=1)) find=find+1
+          If ((type[n-1]=1 And type[n+90]=1) Or (type[n-1]=1 And type[n-90]=1)) find=find+1
+        Endif
+        If (find=find2) 
+          broken=random(4)
+          If (broken=0) type[n]=11
+          If (broken>0) type[n]=12 
+          Break
+        Endif
+      Loop
+    Loop    
+
+
+    /////////Cabinets (Up to 3)
+    times=random(3)
+    Do nn=0,times
+      find=0
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+1]=1 Or type[n+90]=1 Or type[n-1]=1 Or type[n-90]=1) find=find+1
+        Endif
+      Loop
+      find2=random(find)+1; find=0 
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+1]=1 Or type[n+90]=1 Or type[n-1]=1 Or type[n-90]=1) find=find+1
+        Endif
+        If (find=find2) 
+          oc=random(4)
+          If (oc>0) type[n]=14
+          If (oc=0) type[n]=15 
+          Break
+        Endif
+      Loop      
+    Loop
+
+    /////////TV (Up to 1)
+      find=0
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+1]=1 Or type[n+90]=1 Or type[n-1]=1 Or type[n-90]=1) find=find+1
+        Endif
+      Loop
+      find2=random(find)+1; find=0 
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+1]=1 Or type[n+90]=1 Or type[n-1]=1 Or type[n-90]=1) find=find+1
+        Endif
+        If (find=find2) 
+          type[n]=16
+          Break
+        Endif
+      Loop      
+
+
+    /////////////Couch (Up to 2)
+    times=random(0)
+    Do nn=0,times
+      find=0
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+3]=16 Or type[n+90*3]=16 Or type[n-3]=16 Or type[n-90*3]=16) find=find+1
+        Endif
+      Loop
+      find2=random(find)+1; find=0 
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+3]=16 Or type[n+90*3]=16 Or type[n-3]=16 Or type[n-90*3]=16) find=find+1
+        Endif
+        If (find=find2) 
+          type[n]=20
+          Break
+        Endif
+      Loop      
+    Loop 
+
+    ////////////Tables (Up to 3)
+    find=0
+    Do n=0,8099
+      If (type[n]=0 And shadow[n]=2) find=find+1
+    Loop
+    find2=random(find)+1; find=0
+    Do n=0,8099
+      If (type[n]=0 And shadow[n]=2) find=find+1
+      If (find=find2) type[n]=9; Break
+    Loop
+
+    times=random(3)
+    If (times>0)
+    Do nn=0,times-1
+      find=0
+      Do n=0,8099
+        If (type[n]=0 And (type[n+1]=9 Or type[n-1]=9 Or type[n+90]=9 Or type[n-90]=9) And shadow[n]=2) find=find+1
+      Loop
+      find2=random(find)+1; find=0
+      Do n=0,8099
+        If (type[n]=0 And (type[n+1]=9 Or type[n-1]=9 Or type[n+90]=9 Or type[n-90]=9) And shadow[n]=2) find=find+1
+        If (find=find2) type[n]=9; Break
+      Loop
+    Loop
+    Endif
+
+    /////////////Chairs (Up to 4)
+    times=random(3)+1
+    Do nn=0,times
+      find=0
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+1]=9 Or type[n+90]=9 Or type[n-1]=9 Or type[n-90]=9) find=find+1
+        Endif
+      Loop
+      find2=random(find)+1; find=0 
+      Do n=0,8099
+        If (type[n]=0 And shadow[n]=2)
+          If (type[n+1]=9 Or type[n+90]=9 Or type[n-1]=9 Or type[n-90]=9) find=find+1
+        Endif
+        If (find=find2) 
+          type[n]=19
+          Break
+        Endif
+      Loop      
+    Loop 
+
+    /////////Beds (Up to 2)
+    find=0
+    Do n=0,8099
+      If (type[n]=0 And shadow[n]=2)
+        If (type[n+90]=1 Or type[n-90]=1) find=find+1
+      Endif
+    Loop
+    find2=random(find)+1; find=0 
+    Do n=0,8099
+      If (type[n]=0 And shadow[n]=2)
+        If (type[n+90]=1 Or type[n-90]=1) find=find+1
+      Endif
+      If (find=find2) 
+        type[n]=21
+        dd=random(4); ddd=random(2)-1
+        If (ddd=0) ddd=-1
+        If (type[n+ddd]!=0 Or type[n+ddd*2]!=0) Break
+        If (dd=0) type[n+ddd]=9
+        If (dd=1) type[n+ddd]=14
+        If (dd=2) type[n+ddd]=9; type[n+ddd*2]=21
+        If (dd=3) type[n+ddd]=14; type[n+ddd*2]=21
+        Break 
+      Endif
+    Loop
+
+    /////////Extra Room Door
+    find=0
+    Do m=0,8099 
+      If (shadow[m]=3 And ((type[m+1]=1 And type[m-1]=1) Or (type[m+90]=1 And type[m-90]=1))) find=find+1
+    Loop   
+    find2=random(find)+1; find=0
+    Do m=0,8099
+      If (shadow[m]=3 And ((type[m+1]=1 And type[m-1]=1) Or (type[m+90]=1 And type[m-90]=1))) find=find+1
+      If (find=find2) type[m]=2; Break
+    Loop
+
+    Do m=0,8099
+      If (shadow[m]=2 Or shadow[m]=3) shadow[m]=4
+    Loop    
+
+    Break
+  Endif
+Loop
+Endif
+Loop
+
+////////Make Grass Outside
+Do n=0,8099
+  i=1
+  If ((n%90)>=roomx-1 And (n%90)<=roomx+roomxl+1 And (n/90)>=roomy-1 And (n/90)<=roomy+roomyl+1) i=0
+  If (i=1) type[n]=4
+Loop
+
+Do times=0,10 ///////Windows
+  find=0
+  Do n=0,8099
+    If (type[n]=1) 
+      If ((type[n+1]=4 And type[n-1]=0) Or (type[n+90]=4 And type[n-90]=0)) find=find+1
+      If ((type[n-1]=4 And type[n+1]=0) Or (type[n-90]=4 And type[n+90]=0)) find=find+1
+    Endif
+  Loop
+  find2=random(find)+1; find=0
+  Do n=0,8099
+    If (type[n]=1) 
+      If ((type[n+1]=4 And type[n-1]=0) Or (type[n+90]=4 And type[n-90]=0)) find=find+1
+      If ((type[n-1]=4 And type[n+1]=0) Or (type[n-90]=4 And type[n+90]=0)) find=find+1
+      If (find=find2) 
+        type[n]=6
+        Break
+      Endif
+    Endif
+  Loop
+Loop
+
+Do times=0,3 ///////Balcony
+  find=0
+  Do n=0,8099
+    If (type[n]=1) 
+      If ((type[n+1]=4 And type[n-1]=0)) find=find+1
+      If ((type[n-1]=4 And type[n+1]=0)) find=find+1
+      If ((type[n+90]=4 And type[n-90]=0)) find=find+1
+      If ((type[n-90]=4 And type[n+90]=0)) find=find+1
+    Endif
+  Loop
+  find2=random(find)+1; find=0
+  Do n=0,8099
+    If (type[n]=1) 
+      If ((type[n+1]=4 And type[n-1]=0)) find=find+1
+      If ((type[n-1]=4 And type[n+1]=0)) find=find+1
+      If ((type[n+90]=4 And type[n-90]=0)) find=find+1
+      If ((type[n-90]=4 And type[n+90]=0)) find=find+1
+      If (find=find2) 
+        type[n]=2
+        If (type[n+1]=4 And type[n-1]=0) type[n+1]=26; type[n+1+90]=26; type[n+1-90]=26
+        If (type[n-1]=4 And type[n+1]=0) type[n-1]=26; type[n-1+90]=26; type[n-1-90]=26
+        If (type[n+90]=4 And type[n-90]=0)  type[n+90]=26; type[n+1+90]=26; type[n-1+90]=26
+        If (type[n-90]=4 And type[n+90]=0)  type[n-90]=26; type[n+1-90]=26; type[n-1-90]=26
+        Break
+      Endif
+    Endif
+  Loop
+Loop
+
+Do n=0,8099 ////Grass to Air
+  If (floor>0 And type[n]=4) type[n]=8
+Loop
+
+If (floor>=1) ////Make Air Outside
+  Do n=0,8099
+    If (type[n]=4) type[n]=8
+  Loop
+Endif
+
+Do n=0,8099
+  shadow[n]=0
+Loop
+
+////////////////////////////Spawn Player In Bed
+If (downstair=0)
+find=0
+Do n=0,8099
+  If (type[n]=21) find=find+1
+Loop
+find2=random(find)+1; find=0
+Do n=0,8099
+  If (type[n]=21) find=find+1
+  If (find=find2)
+    dd=random(2)
+    If (dd=0 And type[n+1]=0) type[n+1]=12
+    If (dd=1 And type[n-1]=0) type[n-1]=12
+    playerx=n%90
+    playery=n/90
+    Break
+  Endif
+Loop
+
+inv[0]="Match"
+inv[1]="Match"
+
+Endif
+
+///////////////////////////////Spawn Player On Stairs
+If (downstair=1)
+  If (wiferoom=0) wiferoom=1
+  Do n=0,8099
+    If (type[n]=35)
+      elevcon=0; elevtime=15
+      playerx=n%90; playery=n/90
+      Break
+    Endif
+  Loop
+Endif
+If (downstair=2)
+  If (wiferoom=0) wiferoom=1
+  Do n=0,8099
+    If (type[n]=34)
+      elevcon=0; elevtime=15
+      playerx=n%90; playery=n/90
+      Break
+    Endif
+  Loop
+Endif
+
+downstair=0
+
+If (wiferoom=1)
+Do nn=0,0 /////////////////////Dead Wife Scene
+  find=0
+  Do n=0,8099
+    If (type[n]=0 And type[n+1]=0 And type[n-1]=0 And type[n+90]=0 And type[n-90]=0) find=find+1
+  Loop
+  find2=random(find)+1; find=0
+  Do n=0,8099
+    If (type[n]=0) find=find+1
+    If (find=find2)
+      Do m=0,8099
+        shadow[m]=0
+      Loop
+      shadow[n]=1
+      Do nnn=0,20
+        Do m=0,8099
+          If (type[m]=0 Or type[m]=2)
+            If (shadow[m+1]=1) shadow[m]=1
+            If (shadow[m-1]=1) shadow[m]=1
+            If (shadow[m+90]=1) shadow[m]=1
+            If (shadow[m-90]=1) shadow[m]=1
+            If (shadow[m+90+1]=1) shadow[m]=1
+            If (shadow[m+90-1]=1) shadow[m]=1
+            If (shadow[m-90+1]=1) shadow[m]=1
+            If (shadow[m-90-1]=1) shadow[m]=1
+          Endif
+        Loop
+      Loop
+      Do m=0,8099
+        If (shadow[m]=1)
+          If (type[m+1]=2) type[m+1]=44
+          If (type[m-1]=2) type[m-1]=44
+          If (type[m+90]=2) type[m+90]=44
+          If (type[m-90]=2) type[m-90]=44
+          If (type[m+90+1]=2) type[m+90+1]=44
+          If (type[m+90-1]=2) type[m+90-1]=44
+          If (type[m-90+1]=2) type[m-90+1]=44
+          If (type[m-90-1]=2) type[m-90-1]=44
+        Endif
+      Loop
+      find=0
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0)
+          find=find+1
+        Endif
+      Loop
+      find2=random(find)+1; find=0
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0) find=find+1
+        If (find=find2)
+          type[m]=43; dx=m%90; dy=m/90
+          Break
+        Endif
+      Loop
+
+      find=0
+      //////////////////Police Lines Horizontal
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0 And type[m-90]!=1 And type[m-1]=1 And dx!=m%90) find=find+1
+      Loop
+      find2=random(find)+1; find=0
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0 And type[m-90]!=1 And type[m-1]=1 And dx!=m%90) find=find+1
+        If (find=find2)
+          Do mm=0,20 
+            If (type[m+mm]=1 Or type[m+mm]=6 Or type[m+mm]=7 Or type[m+mm]=9 Or type[m+mm]=14 Or type[m+mm]=44) Break ///////Police Lines Tiles that Block
+            type[m+mm]=41
+          Loop
+          Break
+        Endif
+      Loop
+
+      find=0
+      //////////////////Police Lines Vertical
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0 And type[m-90]=1 And dy!=m/90) find=find+1
+      Loop
+      find2=random(find)+1; find=0
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0 And type[m-90]=1 And dy!=m/90) find=find+1
+        If (find=find2)
+          Do mm=0,20 
+            If (type[m+mm*90]=1 Or type[m+mm*90]=6 Or type[m+mm*90]=7 Or type[m+mm*90]=9 Or type[m+mm*90]=14 Or type[m+mm*90]=44) Break ///////Police Lines Tiles that Block
+            type[m+mm*90]=42           
+            If (type[m+mm*90+1]=41 Or type[m+mm*90-1]=41) type[m+mm*90]=45
+          Loop
+          Break
+        Endif
+      Loop
+ 
+      find=0
+      //////////////////Portrait Spawn
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0) find=find+1
+      Loop
+      find2=random(find)+1; find=0
+      Do m=0,8099
+        If (shadow[m]=1 And type[m]=0) find=find+1
+        If (find=find2)
+          Do mm=0,199
+            If (item[mm]="") item[mm]="Portrait"; itemx[mm]=m%90; itemy[mm]=m/90; Break
+          Loop
+          Break
+        Endif
+      Loop
+                
+         
+      Break
+    Endif
+  Loop
+Loop
+Endif
+
+//////////////////Dead People Apartment
+If (washed=0)
+find=0
+Do m=0,8099 
+  If (type[m]=0 And shadow[m]=0) find=find+1
+Loop   
+find2=random(find)+1; find=0
+Do m=0,8099
+  If (type[m]=0 And shadow[m]=0) find=find+1
+  If (find=find2)  
+        Do n=0,8099
+          If (type[n]!=0 And type[n]!=2 And type[n]!=5) shadow[n]=-1
+        Loop
+        Do i=0,199
+          If (item[i]="") 
+            item[i]="Deceased Person"; itemx[i]=m%90; itemy[i]=m/90; shadow[itemx[i]+itemy[i]*90]=1; dis=1; ii=i; dd=0
+            If (type[itemx[i]+itemy[i]*90+1]=0 And dd=0) item[i+2]="Note"; itemx[i+2]=itemx[i]+1; itemy[i+2]=itemy[i]; dd=1
+            If (type[itemx[i]+itemy[i]*90-1]=0 And dd=0) item[i+2]="Note"; itemx[i+2]=itemx[i]-1; itemy[i+2]=itemy[i]; dd=1
+            If (type[itemx[i]+itemy[i]*90+90]=0 And dd=0) item[i+2]="Note"; itemx[i+2]=itemx[i]; itemy[i+2]=itemy[i]+1; dd=1
+            If (type[itemx[i]+itemy[i]*90-90]=0 And dd=0) item[i+2]="Note"; itemx[i+2]=itemx[i]; itemy[i+2]=itemy[i]-1; dd=1
+            If (dd=0) item[i+1]="Note"; itemx[i+2]=itemx[i]; itemy[i+2]=itemy[i]; dd=1
+            item[i+1]="Bloody ID Card"; itemx[i+1]=itemx[i+2]; itemy[i+1]=itemy[i+2]; ddd=itemx[i+1]+itemy[i+1]*90
+            Break
+          Endif
+        Loop
+        Do mm=0,10
+          Do nn=0,8099
+            If (shadow[nn]=0)
+              If (shadow[nn+1]=dis) shadow[nn]=shadow[nn+1]+1
+              If (shadow[nn-1]=dis) shadow[nn]=shadow[nn-1]+1
+              If (shadow[nn+90]=dis) shadow[nn]=shadow[nn+90]+1
+              If (shadow[nn-90]=dis) shadow[nn]=shadow[nn-90]+1
+              If (shadow[nn+90+1]=dis) shadow[nn]=shadow[nn+90+1]+1
+              If (shadow[nn+90-1]=dis) shadow[nn]=shadow[nn+90-1]+1
+              If (shadow[nn-90+1]=dis) shadow[nn]=shadow[nn-90+1]+1
+              If (shadow[nn-90-1]=dis) shadow[nn]=shadow[nn-90-1]+1
+            Endif
+          Loop
+          dis=dis+1
+          If (mm>=10)
+            find=0
+            Do nn=0,8099
+              If (shadow[nn]=dis) find=find+1
+            Loop
+            find2=random(find)+1; find=0
+            Do nn=0,8099
+              If (shadow[nn]=dis) find=find+1
+              If (find=find2)
+                pos=nn; Break
+              Endif
+            Loop
+            Do mmm=0,dis
+              dd=0
+              If (dd=0 And shadow[pos]-1=shadow[pos+1]) pos=pos+1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-1]) pos=pos-1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos+90]) pos=pos+90; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-90]) pos=pos-90; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos+90+1]) pos=pos+90+1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-90+1]) pos=pos-90+1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos+90-1]) pos=pos+90-1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-90-1]) pos=pos-90-1; dd=1
+              If (pos=itemx[ii]+itemy[ii]*90) Break
+              If (dd=1)
+                Do i=0,199
+                  If (item[i]="" And pos!=ddd) item[i]="Blood"; itemx[i]=pos%90; itemy[i]=pos/90; Break
+                Loop
+              Endif
+            Loop
+            Break
+          Endif
+        Loop
+    Break
+  Endif
+Loop   
+Endif
+
+Do n=0,8099
+  shadow[n]=0
+Loop
+
+//////////////////////////////////Adding Items 
+times=random(5)+10  ///Cabinets
+Do nn=0,times
+  find=0
+  Do n=0,8099
+    If (type[n]=14) find=find+1
+  Loop
+  find2=random(find)+1; find=0
+  Do n=0,8099
+    If (type[n]=14) find=find+1
+    If (find=find2)
+      dd=random(4)
+      If (dd=0) it="Knife"
+      If (dd=1) it="Hammer"
+      If (dd=2) it="Match"
+      If (dd=3) 
+        dd=random(5)
+        If (dd=0) it="Flashlight (Off)"
+      Endif
+      Do i=0,199
+        If (item[i]="") item[i]=it; itemx[i]=n%90; itemy[i]=n/90; Break
+      Loop
+      Break
+    Endif
+  Loop
+Loop
+
+If (newspaper=0)
+find=0
+Do n=0,8099
+  If (type[n]=14) find=find+1
+Loop
+find2=random(find); find=0
+Do n=0,8099
+  If (type[n]=14) find=find+1
+  If (find2=find)
+    Do i=0,199
+      If (item[i]="") item[i]="News Article"; itemx[i]=n%90; itemy[i]=n/90; Break
+    Loop    
+    Break
+  Endif
+Loop
+Endif
+
+times=random(2)+2  ///Sinks
+Do nn=0,times
+  find=0
+  Do n=0,8099
+    If (type[n]=28) find=find+1
+  Loop
+  find2=random(find)+1; find=0
+  Do n=0,8099
+    If (type[n]=28) find=find+1
+    If (find=find2)
+      dd=random(0)
+      If (dd=0) it="Bandage"
+      Do i=0,199
+        If (item[i]="") item[i]=it; itemx[i]=n%90; itemy[i]=n/90; Break
+      Loop
+      Break
+    Endif
+  Loop
+Loop
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////////////////Game
+Do
+  select screen(1)
+  cls
+  key=readkey()
+  
+If (alive=1 And fainted<=0 And asleep=0 And spine<=1)
+  //////////////////////////////////////////////////////Movement
+  oldpos=playerx+playery*90
+  If (key=56 And playery>0 And type[oldpos-90]!=1 And type[oldpos-90]!=2 And type[oldpos-90]!=6 And type[oldpos-90]!=7 And type[oldpos-90]<9) //up
+    playery=playery-1
+  Endif
+  If (key=56 And playery>0 And (type[oldpos-90]=13 Or (type[oldpos-90]>=19 And type[oldpos-90]<=26) Or type[oldpos-90]>=34)) playery=playery-1
+
+  If (key=50 And playery<90-1 And type[oldpos+90]!=1 And type[oldpos+90]!=2 And type[oldpos+90]!=6 And type[oldpos+90]!=7 And type[oldpos+90]<9) //down
+    playery=playery+1
+  Endif 
+  If (key=50 And playery<90-1 And (type[oldpos+90]=13 Or (type[oldpos+90]>=19 And type[oldpos+90]<=26) Or type[oldpos+90]>=34)) playery=playery+1
+
+  If (key=54 And playerx<90-1 And type[oldpos+1]!=1 And type[oldpos+1]!=2 And type[oldpos+1]!=6 And type[oldpos+1]!=7 And type[oldpos+1]<9) //right
+    playerx=playerx+1
+  Endif
+  If (key=54 And playerx<90-1 And (type[oldpos+1]=13 Or (type[oldpos+1]>=19 And type[oldpos+1]<=26) Or type[oldpos+1]>=34)) playerx=playerx+1
+
+  If (key=52 And playerx>0 And type[oldpos-1]!=1 And type[oldpos-1]!=2 And type[oldpos-1]!=6 And type[oldpos-1]!=7 And type[oldpos-1]<9) //left
+    playerx=playerx-1
+  Endif
+  If (key=52 And playerx>0 And (type[oldpos-1]=13 Or (type[oldpos-1]>=19 And type[oldpos-1]<=26) Or type[oldpos-1]>=34)) playerx=playerx-1
+
+  If (key=55 And playery>0 And playerx>0 And type[oldpos-90-1]!=1 And type[oldpos-90-1]!=2 And type[oldpos-90-1]!=6 And type[oldpos-90-1]!=7 And type[oldpos-90-1]<9) //up left
+    playery=playery-1; playerx=playerx-1
+  Endif
+  If (key=55 And playery>0 And playerx>0 And (type[oldpos-90-1]=13 Or (type[oldpos-90-1]>=19 And type[oldpos-90-1]<=26) Or type[oldpos-90-1]>=34)) playery=playery-1; playerx=playerx-1
+
+  If (key=57 And playery>0 And playerx<90-1 And type[oldpos-90+1]!=1 And type[oldpos-90+1]!=2 And type[oldpos-90+1]!=6 And type[oldpos-90+1]!=7 And type[oldpos-90+1]<9) //up right
+    playery=playery-1; playerx=playerx+1
+  Endif
+  If (key=57 And playery>0 And playerx<90-1 And (type[oldpos-90+1]=13 Or (type[oldpos-90+1]>=19 And type[oldpos-90+1]<=26) Or type[oldpos-90+1]>=34)) playery=playery-1; playerx=playerx+1
+
+  If (key=49 And playerx>0 And playery<90-1 And type[oldpos+90-1]!=1 And type[oldpos+90-1]!=2 And type[oldpos+90-1]!=6 And type[oldpos+90-1]!=7 And type[oldpos+90-1]<9) //down left
+    playerx=playerx-1; playery=playery+1
+  Endif 
+  If (key=49 And playerx>0 And playery<90-1 And (type[oldpos+90-1]=13 Or (type[oldpos+90-1]>=19 And type[oldpos+90-1]<=26) Or type[oldpos+90-1]>=34)) playerx=playerx-1; playery=playery+1
+
+  If (key=51 And playerx<90-1 And playery<90-1 And type[oldpos+90+1]!=1 And type[oldpos+90+1]!=2 And type[oldpos+90+1]!=6 And type[oldpos+90+1]!=7 And type[oldpos+90+1]<9) //down right
+    playerx=playerx+1; playery=playery+1
+  Endif
+  If (key=51 And playerx<90-1 And playery<90-1 And (type[oldpos+90+1]=13 Or (type[oldpos+90+1]>=19 And type[oldpos+90+1]<=26) Or type[oldpos+90+1]>=34)) playerx=playerx+1; playery=playery+1
+
+  Do n=0,49
+    If (npc[n]!="" And npcx[n]+npcy[n]*90=playerx+playery*90)
+      playerx=oldpos%90; playery=oldpos/90
+    Endif
+  Loop
+
+  If (playerx+playery*90!=oldpos)
+    onwall=type[playerx+playery*90]
+    If (onwall=37 Or onwall=38 Or onwall=40 Or onwall=41 Or onwall=42 Or onwall=44 Or onwall=45) playerx=oldpos%90; playery=oldpos/90
+  Endif
+
+  If (oldpos!=playerx+playery*90) turn=turn+1
+
+Endif
+If (alive=1 And asleep=0)
+  /////////////////////////////////////////////////////////Waiting a Turn
+  If (key=53)
+    If (Extract(news[0],0,7)!="You Wait") amwait=0
+    addnews="You Wait"; turn=turn+1; amwait=amwait+1
+    If (Extract(news[0],0,7)="You Wait")
+      a="You Wait x"+itot(amwait)
+      news[0]=a
+      addnews=""
+    Endif
+  Endif
+Endif
+  
+  ///////////////////////////////////////////Shadows
+  times=0
+  ///////////////////////////////////Tile Light
+  Do m=0,8099
+    shadow[m]=0
+    If (type[m]=10 Or type[m]=17 Or type[m]=31) times=times+1
+  Loop
+  /////////////////////////////////////Item Light
+  Do m=0,199
+    If (item[m]="Lit Match") times=times+1
+    If (item[m]="Flashlight (On)") times=times+1
+  Loop
+  dd=0
+  If (righthanditem="Flashlight (On)" Or lefthanditem="Flashlight (On)") times=times+1; dd=1
+  If ((righthanditem="Lit Match" Or lefthanditem="Lit Match") And dd=0) times=times+1
+
+  If (view=1)
+    Do i=0,times
+      If (i=times) Break
+      lighttiles=0
+      Do m=0,8099
+        If (type[m]=10) lx=m%90; ly=m/90; bright=10; type[m]=-10; shadow[m]=bright; lighttiles=1; Break
+        If (type[m]=17) lx=m%90; ly=m/90; bright=5;  type[m]=-17; shadow[m]=bright; lighttiles=1; Break
+        If (type[m]=31) 
+          bright=10; type[m]=-31; lighttiles=1
+          If (type[m+90+1]=22) shadow[m+90+1]=bright; lx=(m+1)%90; ly=(m+90)/90
+          If (type[m+90-1]=22) shadow[m+90-1]=bright; lx=(m-1)%90; ly=(m+90)/90
+          If (type[m-90+1]=22) shadow[m-90+1]=bright; lx=(m+1)%90; ly=(m-90)/90
+          If (type[m-90-1]=22) shadow[m-90-1]=bright; lx=(m-1)%90; ly=(m-90)/90
+          If (type[m+1]=22) shadow[m+1]=bright; lx=(m+1)%90; ly=(m)/90
+          If (type[m-1]=22) shadow[m-1]=bright; lx=(m-1)%90; ly=(m)/90
+          If (type[m+90]=22) shadow[m+90]=bright; lx=(m)%90; ly=(m+90)/90
+          If (type[m-90]=22) shadow[m-90]=bright; lx=(m)%90; ly=(m-90)/90
+          Break
+        Endif
+      Loop
+      If (lighttiles=0)
+        zero="0"
+        Do m=0,199
+          If (item[m]="Lit Match") lx=itemx[m]; ly=itemy[m]; bright=random(2)+4; item[m]=zero+item[m]; shadow[itemx[m]+itemy[m]*90]=bright; lighttiles=1; Break
+          If (item[m]="Flashlight (On)") lx=itemx[m]; ly=itemy[m]; bright=6; item[m]=zero+item[m]; shadow[itemx[m]+itemy[m]*90]=bright; lighttiles=1; Break
+        Loop
+      Endif
+      If (lighttiles=0)
+        dd=0
+        If (righthanditem="Flashlight (On)" Or lefthanditem="Flashlight (On)") lx=playerx; ly=playery; bright=6; shadow[playerx+playery*90]=bright; dd=1
+        If ((righthanditem="Lit Match" Or lefthanditem="Lit Match") And dd=0) lx=playerx; ly=playery; bright=random(2)+4; shadow[playerx+playery*90]=bright
+      Endif
+      Do n=0,8099
+        rx=lx-(n%90)
+        ry=ly-(n/90)
+        rc=sqrt(rx*rx+ry*ry)
+        If (rc<=bright)
+          rxx=rx; ryy=ry
+          Do d=0.0,bright-1
+            ry=ryy; rx=rxx
+            ry=ry*(d/bright); rx=rx*(d/bright)
+            onwall=type[lx-rx+(ly-ry)*90]
+            If (onwall=1 Or onwall=2 Or onwall=6 Or onwall=30 Or onwall=-31 Or onwall=32 Or onwall=37 Or onwall=38 Or onwall=40 Or onwall=44)  /////////////////What Tiles Block Light
+              Break
+            Endif
+            rcc=0; rcc=rc
+            If (d=bright-1) shadow[n]=shadow[n]+(bright-rcc)
+          Loop
+        Endif
+      Loop
+      shadow[lx+ly*90]=shadow[lx+ly*90+1]+1
+      If (shadow[lx+ly*90-1]+1<shadow[lx+ly*90]) shadow[lx+ly*90]=shadow[lx+ly*90-1]+1
+      If (shadow[lx+ly*90+90]+1<shadow[lx+ly*90]) shadow[lx+ly*90]=shadow[lx+ly*90+90]+1
+      If (shadow[lx+ly*90-90]+1<shadow[lx+ly*90]) shadow[lx+ly*90]=shadow[lx+ly*90-90]+1
+    Loop
+  Endif
+
+  Do n=0,8099
+   If (type[n]=-10) type[n]=10
+   If (type[n]=-17) type[n]=17
+   If (type[n]=-31) type[n]=31
+   ///////////////////////////////////////////////////////Display Tiles
+   If (playerx<(n%90)+20 And playerx>(n%90)-20 And playery<(n/90)+17 And playery>(n/90)-17 And shadow[n]!=0)
+    imx=0; imy=0
+    shadow[n]=shadow[n]-1
+    If (shadow[n]<0) shadow[n]=0 
+    If (shadow[n]>9) shadow[n]=9
+      If (type[n]=0) imx=16*0; imy=shadow[n]*16; //Floor
+      If (type[n]=1) imx=16*1; imy=shadow[n]*16; //Wall
+      If (type[n]=2) imx=16*2; imy=shadow[n]*16; //Door Closed
+      If (type[n]=3) imx=16*3; imy=shadow[n]*16; //Door Open
+      If (type[n]=4) imx=16*4; imy=shadow[n]*16; //Grass
+      If (type[n]=5) imx=16*5; imy=shadow[n]*16; //Floor 2
+      If (type[n]=6) imx=16*6; imy=shadow[n]*16; //Closed Window
+      If (type[n]=7) imx=16*7; imy=shadow[n]*16; //Open Window
+      If (type[n]=8) imx=16*8; imy=shadow[n]*16; //Air
+      If (type[n]=9) imx=16*9; imy=shadow[n]*16; //Table
+      If (type[n]=10) imx=16*10; imy=shadow[n]*16; //Lamp
+      If (type[n]=11) imx=16*11; imy=shadow[n]*16; //Broken Lamp
+      If (type[n]=12) imx=16*12; imy=shadow[n]*16; //Turned Off Lamp
+      If (type[n]=13) imx=16*13; imy=shadow[n]*16; //Broken Window
+      If (type[n]=14) imx=16*14; imy=shadow[n]*16; //Closed Cabinet
+      If (type[n]=15) imx=16*15; imy=shadow[n]*16; //Open Cabinet
+      If (type[n]=16) imx=16*16; imy=shadow[n]*16; //Turned Off TV
+      If (type[n]=17) imx=16*17; imy=shadow[n]*16; //Turned On TV
+      If (type[n]=18) imx=16*18; imy=shadow[n]*16; //Broken TV
+      If (type[n]=19) imx=16*19; imy=shadow[n]*16; //Chair
+      If (type[n]=20) imx=16*20; imy=shadow[n]*16; //Couch
+      If (type[n]=21) imx=16*21; imy=shadow[n]*16; //Bed
+      If (type[n]=22) imx=16*22; imy=shadow[n]*16; //Bathroom Floor
+      If (type[n]=23) imx=16*23; imy=shadow[n]*16; //Toilet
+      If (type[n]=24) imx=16*24; imy=shadow[n]*16; //Empty Bathtub
+      If (type[n]=25) imx=16*25; imy=shadow[n]*16; //Filled Bathtub
+      If (type[n]=26) imx=16*26; imy=shadow[n]*16; //Balcony
+      If (type[n]=27) imx=16*27; imy=shadow[n]*16; //Trashcan
+      If (type[n]=28) imx=16*28; imy=shadow[n]*16; //Closed Sink
+      If (type[n]=29) imx=16*29; imy=shadow[n]*16; //Open Sink
+      If (type[n]=30) imx=16*30; imy=shadow[n]*16; //Off Bathroom Wall Light
+      If (type[n]=31) imx=16*31; imy=shadow[n]*16; //On Bathroom Wall Light
+      If (type[n]=32) imx=16*32; imy=shadow[n]*16; //Broken Bathroom Wall Light
+      If (type[n]=33) imx=16*33; imy=shadow[n]*16; //Some Wall
+      If (type[n]=34) imx=16*34; imy=shadow[n]*16; //Stair Down
+      If (type[n]=35) imx=16*35; imy=shadow[n]*16; //Stair Up
+      If (type[n]=36) imx=16*36; imy=shadow[n]*16; //Elevator Floor
+      If (type[n]=37) imx=16*37; imy=shadow[n]*16; //Elevator Wall
+      If (type[n]=38) imx=16*38; imy=shadow[n]*16; //Elevator Door Closed
+      If (type[n]=39) imx=16*39; imy=shadow[n]*16; //Elevator Door Open
+      If (type[n]=40) imx=16*40; imy=shadow[n]*16; //Elevator Control
+      If (type[n]=41) imx=16*41; imy=shadow[n]*16; //Police Line Horizontal
+      If (type[n]=42) imx=16*42; imy=shadow[n]*16; //Police Line Vertical
+      If (type[n]=43) imx=16*43; imy=shadow[n]*16; //Body Chalk Line
+      If (type[n]=44) imx=16*44; imy=shadow[n]*16; //Door Police Line
+      If (type[n]=45) imx=16*45; imy=shadow[n]*16; //Police Line Cross
+      If (type[n]=46) imx=16*46; imy=shadow[n]*16; //Police Line Broken Horizontal
+      If (type[n]=47) imx=16*47; imy=shadow[n]*16; //Police Line Broken Vertical
+      If (type[n]=48) imx=16*48; imy=shadow[n]*16; //Police Line Broken Cross
+      bitblt (imb, ((n%90)-playerx)*16+800/2-80, ((n/90)-playery)*16+600/2-65, 16,16, imx,imy)
+      shadow[n]=shadow[n]+1
+   Endif
+
+   ////////////////////////////Player Stands on Stair Tile
+   If (type[playerx+playery*90]=34 And key=50) 
+     downstair=1
+     addnews="You Go Down Some Stairs"; stop mci (horrorambiance); cycle mci (wind)
+     Goto resetmap
+   Endif 
+
+   If (type[playerx+playery*90]=35 And key=56) 
+     downstair=2
+     addnews="You Go Up Some Stairs"; stop mci (horrorambiance); cycle mci (wind)
+     Goto resetmap
+   Endif 
+
+  Loop
+
+  ////////////////////////////////////////////////////////Display Items
+  Do n=0,199
+    If (Extract(item[n],0,0)="0") item[n]=Extract(item[n],1,length(item[n]))
+    If (type[itemx[n]+itemy[n]*90]!=14 And type[itemx[n]+itemy[n]*90]!=28 And type[itemx[n]+itemy[n]*90]!=2 And type[itemx[n]+itemy[n]*90]!=44) ///////////////Covers Items
+      If (shadow[itemx[n]+itemy[n]*90]>0)
+        imx=0; imy=0; cell=0
+        If (item[n]="Knife") cell=1
+        If (item[n]="Blood") cell=2
+        If (item[n]="Hammer") cell=3
+        If (Extract(item[n],0,6)="Severed") cell=4
+        If (item[n]="Deceased Person") cell=5
+        If (item[n]="Deceased Person" And dseen=0) dseen=1; close mci(suspense); suspense=open mci(path+"suspense.mp3"); start mci(suspense)
+        If (item[n]="Used Match") cell=6
+        If (item[n]="Match") cell=7
+        If (item[n]="Lit Match") cell=8
+        If (item[n]="Plank") cell=9
+        If (item[n]="Bandage") cell=10
+        If (item[n]="Flashlight (Off)") cell=11
+        If (item[n]="Flashlight (On)") cell=12
+        If (item[n]="Note") cell=13
+        If (item[n]="Portrait") cell=14
+        If (item[n]="News Article") cell=15
+        If (item[n]="Cracked Portrait") cell=16
+        If (item[n]="Bloody ID Card") cell=17
+        If (item[n]!="" And itemx[n]>-1 And itemy[n]>-1) Pastestickercell (itemtiles, cell, (itemx[n]-playerx)*16+800/2-80+8, (itemy[n]-playery)*16+600/2-65+8)
+      Endif
+    Endif
+
+    /////////////////Item Picking Up Hint 
+    If (playerx+playery*90=itemx[n]+itemy[n]*90 And hintpick=1)
+      hint="Press <p> To Pick Up Items"; hintpick=0; hinttime=15
+    Endif
+
+  Loop
+
+  ////////////////////////////////////////////////////Display Enemies/Npcs
+  Do n=0,49
+    If (shadow[npcx[n]+npcy[n]*90]>0)
+      //////////////////////////////////? 
+      If (npc[n]="?")
+        bitblt (imb, (npcx[n]-playerx)*16+800/2-80, (npcy[n]-playery)*16+600/2-65, 16,16, 32,176)
+        If (qseen=0) close mci(suspense); suspense=open mci(path+"suspense.mp3"); start mci(suspense); qseen=1
+      Endif
+    Endif
+  Loop
+
+  ///////////////////////////////////////////////////////////Player Display
+  If (dizzy<=0) Pastestickercell (characters, 1, 800/2-80+8,600/2-65+8)
+  If (dizzy>0) Pastestickercell (characters, 3, 800/2-80+8,600/2-65+8)
+  
+  ////////////////////////////////////////////////////////HUD
+  solidcolor(Black)
+  solidrectangle(800-250,0,800,600)
+  solidrectangle(0,600-100,800,600)
+  solidcolor(White)
+  line(800-250,0,800-250,600)
+  line(0,600-100,800-250,600-100)
+  forecolor(White)
+  Outtextxy(800-175,10,"Daryl Blight")
+
+  right="Right"; left="Left"; tstance="Stance: "
+  If (rightarmcon=1 Or righthandcon=1 Or rightarmb=1 Or righthandb=1) forecolor(Darkred)
+  Outtextxy(800-240,600-200,right+" Hand: "+righthanditem); forecolor(White)
+  If (leftarmcon=1 Or lefthandcon=1 Or leftarmb=1 Or lefthandb=1) forecolor(Darkred)
+  Outtextxy(800-240,600-200+15,left+" Hand: "+lefthanditem); forecolor(White)
+  
+  Outtextxy(800-240,600-200+30,tstance+stance); forecolor(White)
+
+  ///////////////////////////////////////////////////Hints
+  If (hint!="" And hintsenabled=1)
+    Outtextxy(15,470,hint,20)
+  Endif
+
+  ////////////////////////////////////////Guilt Meter
+  If (alwaysdying=1) nowguilt=100
+  solidcolor(White)
+  if (alwaysdying=0) rectangle(800-230-2,620-160-2,800-80+2,620-145+2); solidrectangle(800-230,620-160,800-230+(guilt+exguilt)/(guilt2/150.0),620-145)
+  Outtextxy(800-70,620-160,"Guilt")
+  dd=guilt+exguilt
+  Outtextxy(800-180,620-140,itot(dd)+" / 100")
+  
+  forecolor(White)
+
+  ////////////////////////NowGuilt Increase or Decrease
+  If (nowguilt!=0)
+    selectscreen(1)
+    solidcolor(Black)
+    solidrectangle(800-230,620-160,800,620-145)
+    If (nowguilt>0) guilt=guilt+1; nowguilt=nowguilt-1; solidcolor(Darkred)
+    If (nowguilt>0 And badg=0) badg=1; close mci(badguilt); badguilt=open mci(path+"badguilt.wav"); start mci(badguilt)
+    If (nowguilt<0) guilt=guilt-1; nowguilt=nowguilt+1; solidcolor(Green)
+    If (nowguilt<0 And goodg=0) goodg=1; close mci(goodguilt); goodguilt=open mci(path+"goodguilt.wav"); start mci(goodguilt)
+    guilt3=guilt
+    If (guilt3>100) guilt3=100
+    If (alwaysdying=0) rectangle(800-230-2,620-160-2,800-80+2,620-145+2); solidrectangle(800-230,620-160,800-230+(guilt3+exguilt)/(guilt2/150.0),620-145)
+    Outtextxy(800-70,620-160,"Guilt")
+    dd=guilt+exguilt
+    Outtextxy(800-180,620-140,itot(dd)+" / 100")
+  Endif
+  If (nowguilt=0)
+    If (badg=1) badg=0
+    If (goodg=1) goodg=0
+  Endif
+
+  If (alwaysdying=1) solidcolor(White); rectangle(800-230-2,620-160-2,800-80+2,620-145+2); solidcolor(Darkred); solidrectangle(800-230,620-160,800-230+150.,620-145)
+
+  ////////////////////////////////////////////////////////////Status Effects
+  t=1
+  If (bleeding>5 And bleeding<=15)  forecolor(Yellow); Outtextxy(800-240,10+15*t,"Minor Bleeding"); t=t+1
+  If (bleeding>15 And bleeding<=30) forecolor(Orange); Outtextxy(800-240,10+15*t,"Heavy Bleeding"); t=t+1
+  If (bleeding>30)                  forecolor(Darkred); Outtextxy(800-240,10+15*t,"Extremely Bleeding"); t=t+1
+  If (bloodloss>0 And bloodloss<=30)  forecolor(Yellow); Outtextxy(800-240,10+15*t,"Minor Blood Loss"); t=t+1
+  If (bloodloss>30 And bloodloss<=80) forecolor(Orange); Outtextxy(800-240,10+15*t,"Heavy Blood Loss"); t=t+1
+  If (bloodloss>80 And bloodloss<=119) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Extreme Blood Loss"); t=t+1
+  If (bloodloss>=120)                 forecolor(Darkred); Outtextxy(800-240,10+15*t,"Bled Out"); t=t+1
+  If (heart=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Major Internal Bleeding"); t=t+1
+  If (oxygen>0 And oxygen<=10)  forecolor(Yellow); Outtextxy(800-240,10+15*t,"High Oxyen"); t=t+1
+  If (oxygen>10 And oxygen<=20) forecolor(Orange); Outtextxy(800-240,10+15*t,"Low Oxyen"); t=t+1
+  If (oxygen>20)                forecolor(Darkred); Outtextxy(800-240,10+15*t,"No Oxygen"); t=t+1
+  If (trachea=1 Or lungs=2 Or oxygen>20) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Suffocating"); t=t+1
+  If (pain>0 And pain<=20)  forecolor(Yellow); Outtextxy(800-240,10+15*t,"Minor Pain"); t=t+1
+  If (pain>20 And pain<=40) forecolor(Orange); Outtextxy(800-240,10+15*t,"Heavy Pain"); t=t+1
+  If (pain>40)              forecolor(Darkred); Outtextxy(800-240,10+15*t,"Extreme Pain"); t=t+1
+  If (spine>=2) forecolor(Yellow); Outtextxy(800-240,10+15*t,"Paralyzed"); t=t+1
+  If (breathheld=1) forecolor(Purple); Outtextxy(800-240,10+15*t,"Holding Breathe"); t=t+1
+  If (fainted>0) forecolor(Purple); Outtextxy(800-240,10+15*t,"Fainted"); t=t+1
+  If (dizzy>=5 And dizzy<10) forecolor(Blue); Outtextxy(800-240,10+15*t,"Dizzy"); t=t+1
+  If (dizzy>=10) forecolor(Blue); Outtextxy(800-240,10+15*t,"Very Dizzy"); t=t+1
+  If (sick>=20 And sick<40) forecolor(Darkgreen); Outtextxy(800-240,10+15*t,"Sick"); t=t+1
+  If (sick>=40) forecolor(Darkgreen); Outtextxy(800-240,10+15*t,"Very Sick"); t=t+1
+  If (washed=1) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Blood Covered Hands"); t=t+1
+  If (guilt+exguilt>=90 And guilt+exguilt<95) forecolor(Yellow); Outtextxy(800-240,10+15*t,"Suicidal"); t=t+1
+  If (guilt+exguilt>=95)                      forecolor(Darkred); Outtextxy(800-240,10+15*t,"Suicidal"); t=t+1
+
+  forecolor(White)
+  t=t+1
+
+//////////////////////////////////////////////////////////////////Head Status
+  If (neck>0)
+    If (forehead<forehead2 And forehead>=forehead2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Forehead is Hurt"); t=t+1
+    If (forehead<forehead2*.7 And forehead>=forehead2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Forehead is Badly Hurt"); t=t+1
+    If (forehead<forehead2*.3 And forehead>=0)             forecolor(Darkred); Outtextxy(800-240,10+15*t,"Forehead is Extremely Hurt"); t=t+1
+    If (neck<neck2 And neck>=neck2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Neck is Hurt"); t=t+1
+    If (neck<neck2*.7 And neck>=neck2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Neck is Badly Hurt"); t=t+1
+    If (neck<neck2*.3 And neck>=0)        forecolor(Darkred); Outtextxy(800-240,10+15*t,"Neck is Extremely Hurt"); t=t+1
+    If (mouth<mouth2 And mouth>=mouth2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Mouth is Hurt"); t=t+1
+    If (mouth<mouth2*.7 And mouth>=mouth2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Mouth is Badly Hurt"); t=t+1
+    If (mouth<mouth2*.3 And mouth>=0)         forecolor(Darkred); Outtextxy(800-240,10+15*t,"Mouth is Extremely Hurt"); t=t+1
+    If (nosecon<2)
+      If (nose<nose2 And nose>=nose2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Nose is Hurt"); t=t+1
+      If (nose<nose2*.7 And nose>=nose2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Nose is Badly Hurt"); t=t+1
+      If (nose<nose2*.3 And nose>=0)        forecolor(Darkred); Outtextxy(800-240,10+15*t,"Nose is Extremely Hurt"); t=t+1
+      If (nosecon=1) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Broken Nose"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Nose"); t=t+1
+    If (righttemplecon=0)
+      If (righttemple<righttemple2 And righttemple>=righttemple2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Right Temple is Hurt"); t=t+1
+      If (righttemple<righttemple2*.7 And righttemple>=righttemple2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Right Temple is Badly Hurt"); t=t+1
+      If (righttemple<righttemple2*.3 And righttemple>=0)               forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Temple is Extremely Hurt"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Temple is Pierced"); t=t+1
+    If (lefttemplecon=0)
+      If (lefttemple<lefttemple2 And lefttemple>=lefttemple2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Left Temple is Hurt"); t=t+1
+      If (lefttemple<lefttemple2*.7 And lefttemple>=lefttemple2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Left Temple is Badly Hurt"); t=t+1
+      If (lefttemple<lefttemple2*.3 And lefttemple>=0)               forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Temple is Extremely Hurt"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Temple is Pierced"); t=t+1
+    If (righteyecon=0)
+      If (righteye<righteye2 And righteye>=righteye2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Right Eye is Hurt"); t=t+1
+      If (righteye<righteye2*.7 And righteye>=righteye2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Right Eye is Badly Hurt"); t=t+1
+      If (righteye<righteye2*.3 And righteye>=0)            forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Eye is Extremely Hurt"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Right Eye"); t=t+1
+    If (lefteyecon=0)
+      If (lefteye<lefteye2 And lefteye>=lefteye2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Left Eye is Hurt"); t=t+1
+      If (lefteye<lefteye2*.7 And lefteye>=lefteye2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Left Eye is Badly Hurt"); t=t+1
+      If (lefteye<lefteye2*.3 And lefteye>=0)            forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Eye is Extremely Hurt"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Left Eye"); t=t+1
+    If (rightearcon=0)
+      If (rightear<rightear2 And rightear>=rightear2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Right Ear is Hurt"); t=t+1
+      If (rightear<rightear2*.7 And rightear>=rightear2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Right Ear is Badly Hurt"); t=t+1
+      If (rightear<rightear2*.3 And rightear>=0)            forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Ear is Extremely Hurt"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Right Ear"); t=t+1
+    If (leftearcon=0)
+      If (leftear<leftear2 And leftear>=leftear2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Left Ear is Hurt"); t=t+1
+      If (leftear<leftear2*.7 And leftear>=leftear2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Left Ear is Badly Hurt"); t=t+1
+      If (leftear<leftear2*.3 And leftear>=0)            forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Ear is Extremely Hurt"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Left Ear"); t=t+1
+    If (trachea=1) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Trachea"); t=t+1
+    If (skull=1) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Cracked Skull"); t=t+1
+    If (jaw=1) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Broken Jaw"); t=t+1
+    If (brain=1) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Pierced Brain"); t=t+1
+    If (neckb=1) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Fractured Neck"); t=t+1
+  Endif
+  Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Decapitated"); t=t+1
+  t=t+1
+
+/////////////////////////////////////////////////////////////////////////Torso Status
+  If (uppertorso<uppertorso2 And uppertorso>=uppertorso2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Upper Torso is Hurt"); t=t+1
+  If (uppertorso<uppertorso2*.7 And uppertorso>=uppertorso2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Upper Torso is Badly Hurt"); t=t+1
+  If (uppertorso<uppertorso2*.3 And uppertorso>=0)             forecolor(Darkred); Outtextxy(800-240,10+15*t,"Upper Torso is Extremely Hurt"); t=t+1
+  If (lowertorso<lowertorso2 And lowertorso>=lowertorso2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Lower Torso is Hurt"); t=t+1
+  If (lowertorso<lowertorso2*.7 And lowertorso>=lowertorso2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Lower Torso is Badly Hurt"); t=t+1
+  If (lowertorso<lowertorso2*.3 And lowertorso>=0)             forecolor(Darkred); Outtextxy(800-240,10+15*t,"Lower Torso is Extremely Hurt"); t=t+1
+  If (back<back2 And back>=back2*.7)     forecolor(Yellow); Outtextxy(800-240,10+15*t,"Back is Hurt"); t=t+1
+  If (back<back2*.7 And back>=back2*.3)  forecolor(Orange); Outtextxy(800-240,10+15*t,"Back is Badly Hurt"); t=t+1
+  If (back<back2*.3 And back>=0)        forecolor(Darkred); Outtextxy(800-240,10+15*t,"Back is Extremely Hurt"); t=t+1
+  If (lungs=1) forecolor(Orange); Outtextxy(800-240,10+15*t,"Bruised Lungs"); t=t+1
+  If (lungs=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Punctured Lungs"); t=t+1
+  If (heart=1) forecolor(Orange); Outtextxy(800-240,10+15*t,"Bruised Heart"); t=t+1
+  If (heart=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Punctured Heart"); t=t+1
+  If (ribs=1) forecolor(Orange); Outtextxy(800-240,10+15*t,"Broken Rib"); t=t+1
+  If (ribs=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Broken Ribs"); t=t+1
+  If (gut=1) forecolor(Orange); Outtextxy(800-240,10+15*t,"Hurt Gut"); t=t+1
+  If (gut=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Very Hurt Gut"); t=t+1
+  If (liver=1) forecolor(Orange); Outtextxy(800-240,10+15*t,"Hurt Liver"); t=t+1
+  If (liver=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Very Hurt Liver"); t=t+1
+  If (stomach=1) forecolor(Orange); Outtextxy(800-240,10+15*t,"Hurt Stomach"); t=t+1
+  If (stomach=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Very Hurt Stomach"); t=t+1
+  If (spine=1) forecolor(Orange); Outtextxy(800-240,10+15*t,"Damaged Spine"); t=t+1
+  If (spine=2) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Spine"); t=t+1
+  If (spine=3) forecolor(Darkred); Outtextxy(800-240,10+15*t,"Fractured Spine"); t=t+1
+  t=t+1
+
+//////////////////////////////////////////////////////////////////////////////Limbs Status
+  ////////////Arms
+  If (rightarmcon=0)
+    If (rightarm<rightarm2 And rightarm>=rightarm2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Right Arm is Hurt"); t=t+1
+    If (rightarm<rightarm2*.7 And rightarm>=rightarm2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Right Arm is Badly Hurt"); t=t+1
+    If (rightarm<rightarm2*.3 And rightarm>=0)           forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Arm is Extremely Hurt"); t=t+1
+    If (rightarmb=1)                                     forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Arm is Broken"); t=t+1
+    If (righthandcon=0)
+      If (righthand<righthand2 And righthand>=righthand2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Right Hand is Hurt"); t=t+1
+      If (righthand<righthand2*.7 And righthand>=righthand2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Right Hand is Badly Hurt"); t=t+1
+      If (righthand<righthand2*.3 And righthand>=0)            forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Hand is Extremely Hurt"); t=t+1
+      If (righthandb=1)                                        forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Hand is Broken"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Right Hand"); t=t+1
+  Endif
+  Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Right Arm"); t=t+1
+  If (leftarmcon=0)
+    If (leftarm<leftarm2 And leftarm>=leftarm2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Left Arm is Hurt"); t=t+1
+    If (leftarm<leftarm2*.7 And leftarm>=leftarm2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Left Arm is Badly Hurt"); t=t+1
+    If (leftarm<leftarm2*.3 And leftarm>=0)          forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Arm is Extremely Hurt"); t=t+1
+    If (leftarmb=1)                                  forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Arm is Broken"); t=t+1
+    If (lefthandcon=0)
+      If (lefthand<lefthand2 And lefthand>=lefthand2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Left Hand is Hurt"); t=t+1
+      If (lefthand<lefthand2*.7 And lefthand>=lefthand2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Left Hand is Badly Hurt"); t=t+1
+      If (lefthand<lefthand2*.3 And lefthand>=0)           forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Hand is Extremely Hurt"); t=t+1
+      If (lefthandb=1)                                     forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Hand is Broken"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Left Hand"); t=t+1
+  Endif
+  Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Left Arm"); t=t+1
+
+  ///////////Legs
+  If (rightlegcon=0)
+    If (rightleg<rightleg2 And rightleg>=rightleg2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Right Leg is Hurt"); t=t+1
+    If (rightleg<rightleg2*.7 And rightleg>=rightleg2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Right Leg is Badly Hurt"); t=t+1
+    If (rightleg<rightleg2*.3 And rightleg>=0)           forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Leg is Extremely Hurt"); t=t+1
+    If (rightlegb=1)                                     forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Leg is Broken"); t=t+1
+    If (rightfootcon=0)
+      If (rightfoot<rightfoot2 And rightfoot>=rightfoot2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Right Foot is Hurt"); t=t+1
+      If (rightfoot<rightfoot2*.7 And rightfoot>=rightfoot2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Right Foot is Badly Hurt"); t=t+1
+      If (rightfoot<rightfoot2*.3 And rightfoot>=0)            forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Foot is Extremely Hurt"); t=t+1
+      If (rightfootb=1)                                        forecolor(Darkred); Outtextxy(800-240,10+15*t,"Right Foot is Broken"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Right Foot"); t=t+1
+  Endif
+  Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Right Leg"); t=t+1
+  If (leftlegcon=0)
+    If (leftleg<leftleg2 And leftleg>=leftleg2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Left Leg is Hurt"); t=t+1
+    If (leftleg<leftleg2*.7 And leftleg>=leftleg2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Left Leg is Badly Hurt"); t=t+1
+    If (leftleg<leftleg2*.3 And leftleg>=0)           forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Leg is Extremely Hurt"); t=t+1
+    If (leftlegb=1)                                     forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Leg is Broken"); t=t+1
+    If (leftfootcon=0)
+      If (leftfoot<leftfoot2 And leftfoot>=leftfoot2*.7)    forecolor(Yellow); Outtextxy(800-240,10+15*t,"Left Foot is Hurt"); t=t+1
+      If (leftfoot<leftfoot2*.7 And leftfoot>=leftfoot2*.3) forecolor(Orange); Outtextxy(800-240,10+15*t,"Left Foot is Badly Hurt"); t=t+1
+      If (leftfoot<leftfoot2*.3 And leftfoot>=0)            forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Foot is Extremely Hurt"); t=t+1
+      If (leftfootb=1)                                        forecolor(Darkred); Outtextxy(800-240,10+15*t,"Left Foot is Broken"); t=t+1
+    Endif
+    Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Left Foot"); t=t+1
+  Endif
+  Else forecolor(Darkred); Outtextxy(800-240,10+15*t,"Severed Left Leg"); t=t+1
+
+  forecolor(White)
+
+  //////////////////////////////////////////////////////////////////////Change PartStatus
+  If (key=93 And partstatus<2) partstatus=partstatus+1
+  If (key=91 And partstatus>0) partstatus=partstatus-1
+
+  ///////////////////////////////////////////////////////////Show News 1
+  If (addnews!="")
+    Do n=5,1 Step -1
+      news[n]=news[n-1]
+    Loop
+    news[0]=addnews
+    addnews=""
+  Endif
+  Do n=0,5
+    forecolor(rgb(255/(n+1),255/(n+1),255/(n+1)))
+    Outtextxy(10,600-20-15*n,news[n])
+  Loop
+  forecolor(White)
+
+If (alive=1 And fainted<=0 And asleep=0)
+  ///////////////////////////////////////////////////////////////Self Harm
+  If (key=115) //Pressed s
+    Do
+       solidcolor(Black)
+       select=1
+       attmethodselect:
+       Do  ///////////////Chose Attack Method
+         selectscreen(1)
+         ml=20; t=0
+         solidrectangle(5,5,15+ml*10,30+15*4)
+         ///////////////////////////////////////////////////////////////////////////What Slashes, Stabs, Bashes, Splashes, Hits
+         att1="Hit"; att2="Hit"
+         If (righthanditem="Knife") att1="Stab"
+         If ( lefthanditem="Knife") att2="Stab"
+         If (righthanditem="Blood") att1="Splash"
+         If ( lefthanditem="Blood") att2="Splash"
+         If (righthanditem="Hammer") att1="Bash"
+         If ( lefthanditem="Hammer") att2="Bash"
+         If (righthanditem="Plank") att1="Bash"
+         If ( lefthanditem="Plank") att2="Bash"
+
+         Outtextxy(10,10,"Attack How?"); t=t+1 
+         If (righthandcon=1 Or rightarmcon=1 Or righthandb=1 Or rightarmb=1) forecolor(Darkred)
+         Outtextxy(30,10+15*t,att1+" with "+righthanditem); t=t+1; forecolor(White)
+         If (lefthandcon=1 Or leftarmcon=1 Or lefthandb=1 Or leftarmb=1) forecolor(Darkred)
+         Outtextxy(30,10+15*t,att2+" with "+lefthanditem); t=t+1; forecolor(White)
+         Outtextxy(22,10+15*select,">") 
+         selectscreen(0)
+         bitbltscreen(1)
+         key=readkey()
+         If (key=56 And select>1) select=select-1
+         If (key=50 And select<t-1) select=select+1
+         If (key=48) Break
+         If (key=53) 
+           //////////////////////////////////////////////////////////////////////////Weapon Damage
+           wep=""; dam=2; d=0
+           If (select=1 And righthandcon=0 And rightarmcon=0 And righthandb=0 And rightarmb=0) attmethod=att1; wep=righthanditem; d=1
+           If (select=2 And lefthandcon=0 And lefthandcon=0 And lefthandb=0 And leftarmb=0) attmethod=att2; wep=lefthanditem; d=1
+           If (d=0) Goto attmethodselect
+           If (wep="Knife") dam=random(8)+15
+           If (wep="Blood") dam=0
+           If (wep="Hammer") dam=random(5)+15
+           If (wep="Plank") dam=random(4)+12
+           select=1
+           Do
+             selectscreen(1)
+             solidcolor(Black)
+             ml=20; t=0
+             solidrectangle(5,5,15+ml*10,30+15*4)
+             Outtextxy(10,10,attmethod+" What?"); t=t+1
+             Outtextxy(30,10+15*t,"Head"); t=t+1
+             Outtextxy(30,10+15*t,"Torso"); t=t+1
+             Outtextxy(30,10+15*t,"Arms"); t=t+1
+             Outtextxy(30,10+15*t,"Legs"); t=t+1
+             Outtextxy(22,10+15*select,">") 
+             selectscreen(0)
+             bitbltscreen(1)
+             key=readkey()
+             If (key=56 And select>1) select=select-1
+             If (key=50 And select<t-1) select=select+1
+             If (key=48) Break
+             If (key=53)///////////Chose Part
+               severed=""
+               select2=1
+               If (select=1 And suicidego!=1) ////////////////////////////////////////////////////////////Head
+                 headselect:
+                 Do
+                   selectscreen(1)
+                   solidcolor(Black)
+                   ml=20; t=0
+                   solidrectangle(5,5,15+ml*10,30+15*10)
+                   Outtextxy(10,10,attmethod+" What?"); t=t+1
+                   If (forehead<=0) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Forehead"); t=t+1; forecolor(White)
+                   If (neck<=0) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Neck"); t=t+1; forecolor(White)
+                   If (mouth<=0) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Mouth"); t=t+1; forecolor(White)
+                   If (nosecon=2) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Nose"); t=t+1; forecolor(White)
+                   If (righttemplecon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Right Temple"); t=t+1; forecolor(White)
+                   If (lefttemplecon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Left Temple"); t=t+1; forecolor(White)
+                   If (righteyecon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Right Eye"); t=t+1; forecolor(White)
+                   If (lefteyecon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Left Eye"); t=t+1; forecolor(White)
+                   If (rightearcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Right Ear"); t=t+1; forecolor(White)
+                   If (leftearcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Left Ear"); t=t+1; forecolor(White)
+                   Outtextxy(22,10+15*select2,">") 
+                   selectscreen(0)
+                   bitbltscreen(1)
+                   key=readkey()
+                   If (key=56 And select2>1) select2=select2-1
+                   If (key=50 And select2<t-1) select2=select2+1
+                   If (key=48) Break
+                   If (key=53)
+                     d=0
+                     headdam:
+                     If (select2=1 And forehead>0)                                             addnews="You "+attmethod+" your Forehead with "+wep; forehead=forehead-dam; d=1
+                     If (select2=1 And forehead>0 And dam>15 And attmethod="Bash" And skull=0) addnews="You "+attmethod+" your Forehead with "+wep+", Cracking your Skull"; pain=pain+dam; skull=1; d=1
+                     If (forehead<=0) skull=1; brain=1
+                     If (select2=2 And neck>0)                                                                      addnews="You "+attmethod+" your Neck with "+wep; neck=neck-dam; d=1
+                     If (select2=2 And neck>0 And dam>20 And (attmethod="Slash" Or attmethod="Stab") And trachea=0) addnews="You "+attmethod+" your Neck with "+wep+", Severing your Trachea"; trachea=1; bleeding=bleeding+dam/2; pain=pain+dam/2; d=1
+                     If (select2=2 And neck<=0) severed="Severed Head"
+                     If (select2=2 And attmethod="Bash" And dam>=18) addnews="You "+attmethod+" your Neck with "+wep+", Fracturing your Neck"; neckb=1; pain=pain+dam/2; d=1
+                     If (select2=3 And mouth>0) addnews="You "+attmethod+" your Mouth with "+wep; pain=pain+dam; mouth=mouth-dam; d=1
+                     If (select2=3 And mouth>0 And dam>15 And attmethod="Bash" And jaw=0) addnews="You "+attmethod+" your Mouth with "+wep+", Breaking your Jaw"; pain=pain+dam; jaw=1; d=1
+                     If (select2=4 And nosecon<2)                                                        addnews="You "+attmethod+" your Nose with "+wep; nose=nose-dam; d=1
+                     If (select2=4 And dam>=15 And attmethod="Bash" And nosecon=0)                        addnews="You "+attmethod+" your Nose with "+wep+", Breaking your Nose"; pain=pain+dam; nosecon=1; d=1
+                     If (select2=4 And dam>=18 And (attmethod="Slash" Or attmethod="Stab") And nosecon<2) addnews="You "+attmethod+" your Nose with "+wep+", Severing your Nose"; pain=pain+dam; nosecon=2; severed="Severed Nose"; d=1
+                     If (select2=5 And righttemple>=0)                                                                  addnews="You "+attmethod+" your Right Temple with "+wep; righttemple=righttemple-dam; d=1
+                     If (select2=5 And righttemple<=0 And (attmethod="Slash" Or attmethod="Stab") And righttemplecon=0) addnews="You "+attmethod+" your Right Temple with "+wep+", Piercing it"; righttemplecon=1; d=1
+                     If (righttemplecon=1) brain=1
+                     If (select2=6 And lefttemple>=0)                                                                 addnews="You "+attmethod+" your Left Temple with "+wep; lefttemple=lefttemple-dam; d=1
+                     If (select2=6 And lefttemple<=0 And (attmethod="Slash" Or attmethod="Stab") And lefttemplecon=0) addnews="You "+attmethod+" your Left Temple with "+wep+", Piercing it"; lefttemplecon=1; d=1
+                     If (lefttemplecon=1) brain=1
+                     If (select2=7 And righteyecon=0)                                                             addnews="You "+attmethod+" your Right Eye with "+wep; righteye=righteye-dam; d=1
+                     If (select2=7 And righteye<=0 And (attmethod="Slash" Or attmethod="Stab") And righteyecon=0) addnews="You "+attmethod+" your Right Eye with "+wep+", Severing it"; righteye=righteye-dam; righteyecon=1; severed="Severed Eye"; d=1
+                     If (select2=8 And lefteyecon=0)                                                            addnews="You "+attmethod+" your Left Eye with "+wep; lefteye=lefteye-dam; d=1
+                     If (select2=8 And lefteye<=0 And (attmethod="Slash" Or attmethod="Stab") And lefteyecon=0) addnews="You "+attmethod+" your Left Eye with "+wep+", Severing it"; lefteye=lefteye-dam; lefteyecon=1; severed="Severed Eye"; d=1
+                     If (select2=9 And rightearcon=0)                                                             addnews="You "+attmethod+" your Right Ear with "+wep; rightear=rightear-dam; d=1
+                     If (select2=9 And rightear<=0 And (attmethod="Slash" Or attmethod="Stab") And rightearcon=0) addnews="You "+attmethod+" your Right Ear with "+wep+", Severing it"; rightear=rightear-dam; rightearcon=1; severed="Severed Ear"; d=1
+                     If (select2=10 And leftearcon=0)                                                            addnews="You "+attmethod+" your Left Ear with "+wep; leftear=leftear-dam; d=1
+                     If (select2=10 And leftear<=0 And (attmethod="Slash" Or attmethod="Stab") And leftearcon=0) addnews="You "+attmethod+" your Left Ear with "+wep+", Severing it"; leftear=leftear-dam; leftearcon=1; severed="Severed Ear"; d=1
+                     If (d=0) Goto headselect
+                     If (attmethod="Slash" Or attmethod="Stab") bleeding=bleeding+dam
+                     If (dam>5) bloodaround=1
+                     pain=pain+dam
+                     turn=turn+1; Break
+                   Endif
+                   Delay(10)
+                 Loop
+               Endif
+               If (select=2 And suicidego!=1) /////////////////////////////////////////////////////Torso
+                 Do
+                   selectscreen(1)
+                   solidcolor(Black)
+                   ml=15; t=0
+                   solidrectangle(5,5,15+ml*10,30+15*4)
+                   Outtextxy(10,10,attmethod+" What?"); t=t+1
+                   Outtextxy(30,10+15*t,"Upper Torso"); t=t+1
+                   Outtextxy(30,10+15*t,"Lower Torso"); t=t+1
+                   Outtextxy(30,10+15*t,"Back"); t=t+1
+                   Outtextxy(22,10+15*select2,">") 
+                   selectscreen(0)
+                   bitbltscreen(1)
+                   key=readkey()
+                   If (key=56 And select2>1) select2=select2-1
+                   If (key=50 And select2<t-1) select2=select2+1
+                   If (key=48) Break
+                   If (key=53)
+                     torsodam:
+                     If (select2=1) 
+                       partnum=-1
+                       If (attmethod="Stab") partnum=random(4)
+                       If (attmethod="Bash") partnum=random(2)+4
+                       addnews="You "+attmethod+" your Upper Torso with "+wep
+                       If (partnum=0 And lungs<2)  addnews="You "+attmethod+" your Upper Torso with a "+wep+", hurting your Right Lung"; lungs=lungs+1
+                       If (partnum=1 And lungs<2)  addnews="You "+attmethod+" your Upper Torso with a "+wep+", hurting your Left Lung"; lungs=lungs+1
+                       If (partnum=2 And heart<2)  addnews="You "+attmethod+" your Upper Torso with a "+wep+", hurting your Heart"; heart=heart+1
+                       If (partnum=3 And heart<2)  addnews="You "+attmethod+" your Upper Torso with a "+wep+", hurting your Heart"; heart=heart+1
+                       If (partnum=4)  addnews="You "+attmethod+" your Upper Torso with "+wep+", breaking a rib"; ribs=ribs+1; pain=pain+dam/2
+                       uppertorso=uppertorso-dam
+                     Endif
+                     If (select2=2) 
+                       partnum=-1
+                       If (attmethod="Stab") partnum=random(3)
+                       addnews="You "+attmethod+" your Lower Torso with "+wep
+                       If (partnum=0 And gut<2)     addnews="You "+attmethod+" your Lower Torso with a "+wep+", hurting your Gut"; gut=gut+1
+                       If (partnum=1 And liver<2)   addnews="You "+attmethod+" your Lower Torso with a "+wep+", hurting your Liver"; liver=liver+1
+                       If (partnum=2 And stomach<2) addnews="You "+attmethod+" your Lower Torso with a "+wep+", hurting your Stomach"; stomach=stomach+1
+                       lowertorso=lowertorso-dam
+                     Endif
+                     If (select2=3) 
+                       addnews="You "+attmethod+" your Back with "+wep
+                       If ((spine=1 Or spine=3) And dam>=18 And (attmethod="Slash" Or attmethod="Stab")) addnews="You "+attmethod+" your Back with a "+wep+", severing your Spine"; spine=2
+                       If (spine=1 And dam>=18 And attmethod="Bash")                                     addnews="You "+attmethod+" your Back with a "+wep+", fracturing your Spine"; spine=3
+                       If (spine=0 And dam>=18)                                                          addnews="You "+attmethod+" your Back with a "+wep+", hurting your Spine"; spine=1
+                       back=back-dam
+                     Endif
+                     If (attmethod="Slash" Or attmethod="Stab") bleeding=bleeding+dam
+                     If (dam>5) bloodaround=1
+                     pain=pain+dam
+                     turn=turn+1; Break
+                   Endif
+                   Delay(10)
+                 Loop
+               Endif
+               If (select=3 And suicidego!=1) ///////////////////////////////////////////////////Arms
+                 armsselect:
+                 Do
+                   selectscreen(1)
+                   solidcolor(Black)
+                   ml=12; t=0
+                   solidrectangle(5,5,15+ml*10,30+15*4)
+                   Outtextxy(10,10,attmethod+" What?"); t=t+1; forecolor(White)
+                   If (rightarmcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Right Arm"); t=t+1; forecolor(White)
+                   If (rightarmcon=1 Or righthandcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Right Hand"); t=t+1; forecolor(White)
+                   If (leftarmcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Left Arm"); t=t+1; forecolor(White)
+                   If (leftarmcon=1 Or lefthandcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Left Hand"); t=t+1; forecolor(White)
+                   Outtextxy(22,10+15*select2,">") 
+                   selectscreen(0)
+                   bitbltscreen(1)
+                   key=readkey()
+                   If (key=56 And select2>1) select2=select2-1
+                   If (key=50 And select2<t-1) select2=select2+1
+                   If (key=48) Break
+                   If (key=53)
+                     armsdam:
+                     d=0
+                     If (select2=1 And rightarmcon=0)
+                       addnews="You "+attmethod+" your Right Arm with a "+wep; rightarm=rightarm-dam; d=1
+                     Endif
+                     If (select2=1 And rightarmcon=0 And rightarm<=0 And (attmethod="Slash" Or attmethod="Stab"))
+                       addnews="You "+attmethod+" your Right Arm with a "+wep+", severing it"; rightarmcon=1; severed="Severed Right Arm"; d=1
+                       If (righthanditem!="Hand" And righthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=righthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=righthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       righthanditem="Severed"
+                     Endif
+                     If (select2=1 And rightarmcon=0 And attmethod="Bash" And dam>=18)
+                       addnews="You "+attmethod+" your Right Arm with a "+wep+", Breaking it"; rightarmb=1; d=1
+                       If (righthanditem!="Hand" And righthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=righthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=righthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       righthanditem="Hand"
+                     Endif
+                     If (select2=2 And rightarmcon=0 And righthandcon=0) 
+                       addnews="You "+attmethod+" your Right Hand with a "+wep; righthand=righthand-dam; d=1
+                     Endif
+                     If (select2=2 And rightarmcon=0 And righthandcon=0 And righthand<=0 And (attmethod="Slash" Or attmethod="Stab")) 
+                       addnews="You "+attmethod+" your Right Hand with a "+wep+", severing it"; righthandcon=1; severed="Severed Right Hand"; d=1
+                       If (righthanditem!="Hand" And righthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=righthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=righthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       righthanditem="Severed"
+                     Endif
+                     If (select2=2 And rightarmcon=0 And righthandcon=0 And attmethod="Bash" And dam>=18) 
+                       addnews="You "+attmethod+" your Right Hand with a "+wep+", Breaking it"; righthandb=1; d=1
+                       If (righthanditem!="Hand" And righthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=righthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=righthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       righthanditem="Hand"
+                     Endif
+                     If (select2=3 And leftarmcon=0)
+                       addnews="You "+attmethod+" your Left Arm with a "+wep; leftarm=leftarm-dam; d=1
+                     Endif
+                     If (select2=3 And leftarmcon=0 And leftarm<=0 And (attmethod="Slash" Or attmethod="Stab")) 
+                       addnews="You "+attmethod+" your Left Arm with a "+wep+", severing it"; leftarmcon=1; severed="Severed Left Arm"; d=1
+                       If (lefthanditem!="Hand" And lefthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=lefthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=lefthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       lefthanditem="Severed"
+                     Endif
+                     If (select2=3 And leftarmcon=0 And attmethod="Bash" And dam>=18) 
+                       addnews="You "+attmethod+" your Left Arm with a "+wep+", Breaking it"; leftarmb=1; d=1
+                       If (lefthanditem!="Hand" And lefthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=lefthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=lefthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       lefthanditem="Hand"
+                     Endif
+                     If (select2=4 And leftarmcon=0 And lefthandcon=0) 
+                       addnews="You "+attmethod+" your Left Hand with a "+wep; lefthand=lefthand-dam; d=1
+                     Endif
+                     If (select2=4 And leftarmcon=0 And lefthandcon=0 And lefthand<=0 And (attmethod="Slash" Or attmethod="Stab")) 
+                       addnews="You "+attmethod+" your Left Hand with a "+wep+", severing it"; lefthandcon=1; severed="Severed Left Hand"; d=1
+                       If (lefthanditem!="Hand" And lefthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=lefthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=lefthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       lefthanditem="Severed"
+                     Endif
+                     If (select2=4 And leftarmcon=0 And lefthandcon=0 And attmethod="Bash") 
+                       addnews="You "+attmethod+" your Left Hand with a "+wep+", Breaking it"; lefthandb=1; d=1
+                       If (lefthanditem!="Hand" And lefthanditem!="Severed")
+                         Do i=0,199
+                           If (item[i]="") item[i]=lefthanditem; itemx[i]=playerx; itemy[i]=playery; Break
+                         Loop
+                         Do i=0,4
+                           If (inv[i]=lefthanditem) inv[i]=""; Break
+                         Loop
+                       Endif
+                       lefthanditem="Hand"
+                     Endif
+                     If (d=0) Goto armsselect
+                     If (attmethod="Slash" Or attmethod="Stab") bleeding=bleeding+dam
+                     If (dam>5) bloodaround=1
+                     pain=pain+dam
+                     turn=turn+1; Break
+                   Endif
+                   Delay(10)
+                 Loop
+               Endif
+               If (select=4 And suicidego!=1) //////////////////////////////////////////////////Legs
+                 legsselect:
+                 Do
+                   selectscreen(1)
+                   solidcolor(Black)
+                   ml=15; t=0
+                   solidrectangle(5,5,15+ml*10,30+15*4)
+                   Outtextxy(10,10,attmethod+" What?"); t=t+1
+                   If (rightlegcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Right Leg"); t=t+1; forecolor(White)
+                   If (rightlegcon=1 Or rightfootcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Right Foot"); t=t+1; forecolor(White)
+                   If (leftlegcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Left Leg"); t=t+1; forecolor(White)
+                   If (leftlegcon=1 Or leftfootcon=1) forecolor(Darkred)
+                   Outtextxy(30,10+15*t,"Left Foot"); t=t+1; forecolor(White)
+                   Outtextxy(22,10+15*select2,">") 
+                   selectscreen(0)
+                   bitbltscreen(1)
+                   key=readkey()
+                   If (key=56 And select2>1) select2=select2-1
+                   If (key=50 And select2<t-1) select2=select2+1
+                   If (key=48) Break
+                   If (key=53)
+                     legsdam:
+                     d=0
+                     If (select2=1 And rightlegcon=0)
+                       addnews="You "+attmethod+" your Right Leg with a "+wep
+                       If (attmethod="Bash" And dam>=18) rightlegb=1; addnews="You "+attmethod+" your Right Leg with a "+wep+", Breaking it"
+                       If (rightleg<=0 And (attmethod="Slash" Or attmethod="Stab")) rightlegcon=1; severed="Severed Right Leg"; addnews="You "+attmethod+" your Right Leg with a "+wep+", Severing it"
+                       rightleg=rightleg-dam; d=1
+                     Endif
+                     If (select2=2 And rightlegcon=0 And rightfootcon=0) 
+                       addnews="You "+attmethod+" your Right Foot with a "+wep
+                       If (attmethod="Bash" And dam>=18) rightfootb=1; addnews="You "+attmethod+" your Right Foot with a "+wep+", Breaking it"
+                       If (rightfoot<=0 And (attmethod="Slash" Or attmethod="Stab")) rightfootcon=1; severed="Severed Right Foot"; addnews="You "+attmethod+" your Right Foot with a "+wep+", Severing it"
+                       rightfoot=rightfoot-dam; d=1
+                     Endif
+                     If (select2=3 And leftlegcon=0) 
+                       addnews="You "+attmethod+" your Left Leg with a "+wep
+                       If (attmethod="Bash" And dam>=18) leftlegb=1; addnews="You "+attmethod+" your Left Leg with a "+wep+", Breaking it"
+                       If (leftleg<=0 And (attmethod="Slash" Or attmethod="Stab")) leftlegcon=1; severed="Severed Left Leg"; addnews="You "+attmethod+" your Left Leg with a "+wep+", Severing it" 
+                       leftleg=leftleg-dam; d=1
+                     Endif
+                     If (select2=4 And leftlegcon=0 And leftfootcon=0) 
+                       addnews="You "+attmethod+" your Left Foot with a "+wep
+                       If (attmethod="Bash" And dam>=18) leftfootb=1; addnews="You "+attmethod+" your Left Foot with a "+wep+", Breaking it"
+                       If (leftfoot<=0 And (attmethod="Slash" Or attmethod="Stab")) leftfootcon=1; severed="Severed Left Foot"; addnews="You "+attmethod+" your Left Foot with a "+wep+", Severing it"
+                       leftfoot=leftfoot-dam; d=1
+                     Endif
+                     If (d=0) Goto legsselect
+                     If (attmethod="Slash" Or attmethod="Stab") bleeding=bleeding+dam
+                     If (dam>5) bloodaround=1
+                     pain=pain+dam
+                     turn=turn+1; Break
+                   Endif
+                   Delay(10)
+                 Loop
+               Endif
+               If (severed!="")///////////////////////////////////////////////////////////////Severing Body Parts
+                 xslope=random(5)+1; yslope=random(5)+1
+                 xsc=0; ysc=0; xs=0; ys=0; xc=random(2); yc=random(2)
+                 If (xc=0) xc=-1
+                 If (yc=0) yc=-1
+                 Do
+                   onwall=type[playerx+xs+xc+(playery+ys+yc)*90]
+                   If (onwall=1 Or onwall=2 Or onwall=6 Or onwall=7 Or onwall=9 Or onwall=10 Or onwall=11 Or onwall=12 Or (onwall>=14 And onwall<=21) Or (onwall>=27 And onwall<=32)) Break
+                   If (onwall=37 Or onwall=38 Or onwall=40 Or onwall=41 Or onwall=42 Or onwall=44 Or onwall=45) Break
+                   xsc=xsc+1
+                   ysc=ysc+1
+                   If (xsc>=xslope) xs=xs+xc; xsc=0
+                   If (ysc>=yslope) ys=ys+yc; ysc=0
+                   Do i=0,199
+                     If (item[i]="")
+                       d=0
+                       Do ii=0,199
+                         If (item[ii]="Blood" And itemx[ii]=playerx+xs And itemy[ii]=playery+ys) d=d+1; Break
+                       Loop
+                       If (d=0)
+                         itemx[i]=playerx+xs
+                         itemy[i]=playery+ys
+                         item[i]="Blood"
+                         Break
+                       Endif
+                     Endif 
+                   Loop
+                 Loop
+                 Do i=0,199
+                   If (item[i]="")
+                     itemx[i]=playerx+xs
+                     itemy[i]=playery+ys
+                     item[i]=severed
+                     Break
+                   Endif
+                 Loop
+               Endif
+               If (wep="Ground")
+                 Goto impactground
+               Endif
+               If (suicidego=1)
+                 Goto suicide
+               Endif
+               Break
+             Endif //Choose Part End
+             Delay(10)
+           Loop
+           Break
+         Endif
+         Delay(10)
+       Loop 
+       Break
+    Loop
+    forecolor(White)
+  Endif
+
+Endif
+
+  /////////////////////////////////////////////////////////////Show Inventory
+  If (key=105) //Pressed i
+   textd=0
+   Do
+    selectscreen(1)
+    solidcolor(Black)
+    solidrectangle(5,5,15+ml*15,30+15*textd)
+    ml=length("Inventory")
+    Outtextxy(10,10,"Inventory")
+    textd=0
+    Do n=0,5
+      If (inv[n]!="") 
+        Outtextxy(30,26+16*textd,inv[n])
+        If (ml<length(item[n])) ml=length(inv[n]) 
+        textd=textd+1
+      Endif
+    Loop
+    selectscreen(0)
+    bitbltscreen(1)
+
+    key=readkey()
+    If (key=48 Or key=105) Break
+    Delay(10)
+   Loop
+  Endif
+ 
+If (alive=1 And fainted<=0 And asleep=0)
+  /////////////////////////////////////////////////////////////Pick Up Items
+  If (key=112) //Pressed p
+   select=0
+   textd=0
+   Do
+    selectscreen(1)
+    solidcolor(Black)
+    solidrectangle(5,5,15+ml*10,30+15*textd)
+    ml=length("Pick up what?")
+    Outtextxy(10,10,"Pick up what?")
+    textd=0
+    Do n=0,199
+      If (item[n]!="" And playerx=itemx[n] And playery=itemy[n]) 
+        Outtextxy(30,25+textd*15,item[n])
+        If (ml<length(item[n])) ml=length(item[n]) 
+        If (textd=select) Outtextxy(20,26+15*textd,">"); itemid=n
+        textd=textd+1
+      Endif
+    Loop
+    selectscreen(0)
+    bitbltscreen(1)
+
+    key=readkey()
+    If (key=56 And select>0) select=select-1
+    If (key=50 And select<textd-1) select=select+1
+    If (key=53)
+      nn=0
+      If (inv[5]!="") nn=0
+      Do n=0,5
+        If (inv[n]="" And item[itemid]!="" And itemx[itemid]=playerx And itemy[itemid]=playery) 
+          inv[n]=item[itemid]; item[itemid]=""
+          addnews="You picked up a "+inv[n]
+          If (inv[n]="Portrait") addnews="The Portrait Shows You with Your Wife. It Brings Back Bad Memories"; nowguilt=nowguilt+20; wiferoom=2
+          If ((inv[n]="Note" Or inv[n]="News Article" Or inv[n]="Portrait") And hintusepaper=1) hint="Using <u> Will Read Certain Items"; hinttime=15; hintusepaper=0
+          turn=turn+1; nn=1
+          Break
+        Endif
+      Loop
+      If (nn=0)
+        addnews="Your Inventory is Full"
+      Endif
+      Break
+    Endif
+    If (key=48) Break
+    Delay(10)
+   Loop
+  Endif
+
+  //////////////////////////////////////////////////////////Drop Inv Item
+  If (key=100) //Pressed d
+    pick=0
+    textd=0
+    ml=10
+    Do
+      selectscreen(1)
+      key=readkey()
+      solidcolor(Black)
+      solidrectangle(5,5,15+ml*10,30+15*textd)
+      ml=length("Drop what?")
+      textd=0
+      Do n=0,5
+        If (inv[n]!="")
+          If (pick=textd) Outtextxy(22,25+pick*15,">"); picki=n
+          Outtextxy(30,25+textd*15,inv[n])
+          If (ml<length(inv[n])) ml=length(inv[n])
+          textd=textd+1
+        Endif
+      Loop
+      Outtextxy(10,10,"Drop What?")
+      selectscreen(0)
+      bitbltscreen(1)
+      If (key=56 And pick>0)       pick=pick-1
+      If (key=50 And pick<textd-1) pick=pick+1
+      If (key=53 And inv[picki]!="") 
+        addnews="You dropped a "+inv[picki]
+        Do n=0,199
+          If (item[n]="") item[n]=inv[picki]; itemx[n]=playerx; itemy[n]=playery; Break
+        Loop
+        If (righthanditem=inv[picki]) righthanditem="Hand"
+        If (lefthanditem=inv[picki]) lefthanditem="Hand"
+        inv[picki]=""; turn=turn+1 
+        Break
+      Endif   
+      If (key=48) Break
+      Delay(10)
+    Loop 
+  Endif
+  
+  ////////////////////////////////////////////////////////////Equip
+  If (key=101) //Pressed e
+    pick=0
+    textd=0
+    ml=10
+    Do
+      selectscreen(1)
+      key=readkey()
+      solidcolor(Black)
+      solidrectangle(5,5,15+ml*10,30+15*textd)
+      ml=length("Equip What?")
+      textd=0
+      Do n=0,5
+        If (inv[n]!="")
+          If (pick=textd) Outtextxy(22,25+pick*15,">"); picki=n
+          Outtextxy(30,25+textd*15,inv[n])
+          If (ml<length(inv[n])) ml=length(inv[n])
+          textd=textd+1
+        Endif
+      Loop
+      Outtextxy(10,10,"Equip What?")
+      selectscreen(0)
+      bitbltscreen(1)
+      If (key=56 And pick>0)       pick=pick-1
+      If (key=50 And pick<textd-1) pick=pick+1
+      If (key=53 And inv[picki]!="") 
+        pick=0
+        ml=20
+        equipselect:
+        Do
+          selectscreen(1)
+          solidrectangle(5,5,15+ml*10,30+15*textd)   
+          Outtextxy(10,10,"Equip Where?") 
+          textd=0
+          If (righthandcon=1 Or rightarmcon=1 Or rightarmb=1 Or righthandb=1) forecolor(Darkred)
+          Outtextxy(30,25+textd*15,inv[picki]+" in Right Hand"); textd=textd+1; forecolor(White)
+          If (lefthandcon=1 Or leftarmcon=1 Or leftarmb=1 Or lefthandb=1) forecolor(Darkred)
+          Outtextxy(30,25+textd*15,inv[picki]+" in Left Hand"); textd=textd+1; forecolor(White)
+          Outtextxy(22,25+pick*15,">");
+          selectscreen(0)
+          bitbltscreen(1)
+          key=readkey()    
+          If (key=56 And pick>0)       pick=pick-1
+          If (key=50 And pick<textd-1) pick=pick+1
+          If (key=53) 
+            d=0
+            If (pick=0 And righthandcon=0 And rightarmcon=0 And righthandb=0 And rightarmb=0) equiphand="Right"; righthanditem=inv[picki]; d=1
+            If (pick=1 And lefthandcon=0 And leftarmcon=0 And lefthandb=0 And leftarmb=0) equiphand="Left"; lefthanditem=inv[picki]; d=1
+            If (d=0) Goto equipselect
+            addnews="You Equipped a "+inv[picki]+" in "+equiphand+" Hand"
+            turn=turn+1
+            Break
+          Endif
+          If (key=48) Break
+          Delay(10)
+        Loop
+        Break
+      Endif   
+      If (key=48) Break
+      Delay(10)
+    Loop 
+  Endif
+
+  ////////////////////////////////////////////////////////////Throwing Items
+  If (key=116) //Pressed t
+    pick=0; dd=0
+    selectscreen(1)
+    selectscreen(0)
+    bitbltscreen(1)
+    Do
+      selectscreen(1); t=1
+      ml=length("Throw What?")
+      solidcolor(Black)
+      solidrectangle(5,5,15+ml*10,30+30)
+      Outtextxy(10,10,"Throw What?"); forecolor(White); throwt="Throw"
+      If (righthandcon=1 Or rightarmcon=1 Or righthandb=1 Or rightarmb=1 Or righthanditem="Hand") forecolor(Darkred)
+      Outtextxy(30,10+15*t,throwt+" "+righthanditem); t=t+1; forecolor(White) 
+      If (lefthandcon=1 Or leftarmcon=1 Or lefthandb=1 Or leftarmb=1 Or lefthanditem="Hand") forecolor(Darkred)
+      Outtextxy(30,10+15*t,throwt+" "+lefthanditem); t=t+1; forecolor(White)
+      Outtextxy(22,25+pick*15,">");
+
+      key=readkey()
+      If (key=56 And pick>0) pick=pick-1
+      If (key=50 And pick<1) pick=pick+1
+      If (key=53)
+        If (pick=0 And righthandcon=0 And rightarmcon=0 And righthandb=0 And rightarmb=0 And righthanditem!="Hand") itemt=righthanditem; dd=1; Break
+        If (pick=1 And lefthandcon=0 And leftarmcon=0 And lefthandb=0 And leftarmb=0 And lefthanditem!="Hand")      itemt=lefthanditem; dd=1; Break
+      Endif
+      If (key=48) Break
+      selectscreen(0)
+      bitbltscreen(1)
+      delay(10)
+    Loop
+      
+    If (dd=1)
+    selectscreen(1)
+    ml=length("Throw in what direction?")
+    solidcolor(Black)
+    solidrectangle(5,5,15+ml*10,30+30)
+    Outtextxy(10,10,"Throw in what direction?")
+    selectscreen(0)
+    bitbltscreen(1)
+    dir=-2
+    Do 
+      key=readkey()
+      If (key=56) dir=-90 //up
+      If (key=52) dir=-1   //left
+      If (key=50) dir=90  //down
+      If (key=54) dir=1    //right
+      If (key=55) dir=-90-1 //upleft
+      If (key=57) dir=-90+1//upright
+      If (key=49) dir=90-1 //downleft
+      If (key=51) dir=90+1//downright 
+      If (key=48) Break
+
+      If (dir!=-2 And itemt!="Hand" And itemt!="Severed")
+        Do dis=0,10
+          w=type[playerx+playery*90+dir*dis+dir]
+          If (w=8 Or w=19 Or w=42 Or w=44 Or w=45) w=0
+          If (w=1 Or w=2 Or w=6 Or (w>=7 And w<=12) Or (w>=14 And w<=21) Or (w>=27 And w<=32) Or w=37 Or w=38 Or w=40 Or w=41 Or dis=10) 
+            addnews="You Threw a "+itemt
+            Do n=0,5
+              If (inv[n]=itemt)
+                inv[n]=""; Break
+              Endiof         
+            Loop
+            Do n=0,199
+              If (item[n]="")
+                If (pick=0) item[n]=itemt; itemx[n]=(playerx+playery*90+dir*dis)%90; itemy[n]=(playerx+playery*90+dir*dis)/90; righthanditem="Hand"
+                If (pick=1) item[n]=itemt; itemx[n]=(playerx+playery*90+dir*dis)%90; itemy[n]=(playerx+playery*90+dir*dis)/90; lefthanditem="Hand"
+                If (itemt="Portrait")
+                  Do nn=0,199
+                    If (item[nn]="Portrait") item[nn]="Cracked Portrait"; nowguilt=nowguilt-40; Break
+                  Loop
+                Endif
+                Break
+              Endif
+            Loop
+            Break
+          Endif
+        Loop
+        Break
+      Endif
+      Delay(10)
+    Loop
+
+    Endif
+  Endif
+
+
+  /////////////////////////////////////////////////////////////Use Items
+  If (key=117) //Pressed u
+    pick=0
+    textd=0
+    ml=10
+    Do
+      selectscreen(1)
+      key=readkey()
+      solidcolor(Black)
+      solidrectangle(5,5,15+ml*10,30+15*textd)
+      ml=length("Use What?")
+      textd=0
+      Do n=0,5
+        If (inv[n]!="")
+          If (pick=textd) Outtextxy(22,25+pick*15,">"); picki=n
+          Outtextxy(30,25+textd*15,inv[n])
+          If (ml<length(inv[n])) ml=length(inv[n])
+          textd=textd+1
+        Endif
+      Loop
+      Outtextxy(10,10,"Use What?")
+      selectscreen(0)
+      bitbltscreen(1)
+      If (key=56 And pick>0)       pick=pick-1
+      If (key=50 And pick<textd-1) pick=pick+1
+      If (key=53 And inv[picki]!="") 
+        d=0
+        pickiold=inv[picki]
+        ///////////////////////////////What Happens when Used
+        hintused=0
+        If (inv[picki]="Match") inv[picki]="Lit Match"; addnews="You Lit a Match"; matchtime=70; d=1
+        If (inv[picki]="Flashlight (Off)" And d=0) inv[picki]="Flashlight (On)"; addnews="You Turn On a Flashlight"; d=1
+        If (inv[picki]="Flashlight (On)" And d=0) inv[picki]="Flashlight (Off)"; addnews="You Turn Off a Flashlight"; d=1
+        If (inv[picki]="Bandage") bleeding=bleeding-40 ;inv[picki]=""; addnews="You Put on a Bandage"; d=1
+        If (inv[picki]="Portrait") addnews="The Portrait Shows You with Your Now Dead Wife. It Brings back Bad Memories"; d=1
+        If (inv[picki]="Bloody ID Card") addnews="This ID Card Belongs to Frank Everston"; d=1
+        If (inv[picki]="News Article") 
+          d=1; newspaper=1
+          Do
+            selectscreen(1)
+            show image (path+"newsarticle.bmp", 0)
+            key=readkey()
+            If (key=48 Or key=27) Break
+            Delay(20)
+            selectscreen(0)
+            bitbltscreen(1) 
+          Loop         
+          selectscreen(1)
+        Endif
+        If (inv[picki]="Note") 
+          d=1
+          Do
+            selectscreen(1)
+            show image (path+"note1.bmp", 0)
+            key=readkey()
+            If (key=48 Or key=27) Break
+            Delay(20)
+            selectscreen(0)
+            bitbltscreen(1) 
+          Loop         
+          If (washed=0) washed=1; addnews="You Get Blood on your Hands"; nowguilt=nowguilt+20
+          selectscreen(1)
+        Endif
+
+        If (righthanditem=pickiold) righthanditem=inv[picki]
+        If (lefthanditem=pickiold) lefthanditem=inv[picki]
+        If (d=0) addnews="Nothing Happened"
+        turn=turn+1
+        Break
+      Endif   
+      If (key=48) Break
+      Delay(10)
+    Loop 
+  Endif
+
+  /////////////////////////////////////////////////////////////Breaking Tiles
+  If (key=98) //Pressed h
+    selectscreen(1)
+    solidcolor(Black)
+    ml=length("Break What?")
+    solidrectangle(5,5,15+ml*10,30)
+    Outtextxy(10,10,"Break What?")
+    selectscreen(0)
+    bitbltscreen(1)
+    n=playerx+playery*90
+    dir=-2
+    Do 
+      key=readkey()
+      If (key=56) dir=-90 //up
+      If (key=52) dir=-1   //left
+      If (key=50) dir=90  //down
+      If (key=54) dir=1    //right
+      If (key=55) dir=-90-1 //upleft
+      If (key=57) dir=-90+1//upright
+      If (key=49) dir=90-1 //downleft
+      If (key=51) dir=90+1//downright
+      If (key=48) Break
+
+      If (dir!=-2)
+        If (type[n+dir]=1) addnews="You Hit the Wall"; turn=turn+1; Break
+        If (type[n+dir]=2) addnews="You Hit the Door"; turn=turn+1; Break
+        If (type[n+dir]=6) addnews="You Break the Window"; type[n+dir]=13; turn=turn+1; Break
+        If (type[n+dir]=7) addnews="You Break the Window"; type[n+dir]=13; turn=turn+1; Break
+        If (type[n+dir]=30) addnews="You Break the Light"; type[n+dir]=32; turn=turn+1; Break
+        If (type[n+dir]=31) addnews="You Break the Light"; type[n+dir]=32; turn=turn+1; Break
+        If (type[n+dir]=9) 
+          Do ii=0,1
+            Do i=0,199
+              If (item[i]="") item[i]="Plank"; itemx[i]=(n+dir)%90; itemy[i]=(n+dir)/90; Break
+            Loop
+          Loop
+          addnews="You Break the Table"; type[n+dir]=0; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=10) addnews="You Break the Lamp"; type[n+dir]=11; turn=turn+1; Break
+        If (type[n+dir]=12) addnews="You Break the Lamp"; type[n+dir]=11; turn=turn+1; Break
+        If (type[n+dir]=14 Or type[n+dir]=15) 
+          Do ii=0,1
+            Do i=0,199
+              If (item[i]="") item[i]="Plank"; itemx[i]=(n+dir)%90; itemy[i]=(n+dir)/90; Break
+            Loop
+          Loop
+          addnews="You Break the Cabinet"; type[n+dir]=0; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=16) addnews="You Break the TV"; type[n+dir]=18; turn=turn+1; Break
+        If (type[n+dir]=17) addnews="You Break the TV"; type[n+dir]=18; turn=turn+1; Break
+        If (type[n+dir]=19) 
+          Do i=0,199
+            If (item[i]="") item[i]="Plank"; itemx[i]=(n+dir)%90; itemy[i]=(n+dir)/90; Break
+          Loop
+          addnews="You Break the Chair"; type[n+dir]=0; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=41 Or type[n+dir]=42 Or type[n+dir]=45)
+          If (type[n+dir]=41) type[n+dir]=46
+          If (type[n+dir]=42) type[n+dir]=47
+          If (type[n+dir]=45) type[n+dir]=48
+          Do mm=0,20
+            Do m=0,8099 
+              If (type[m]=41)
+                If (type[m+1]=46 Or type[m+1]=47 Or type[m+1]=48) type[m]=46; Break
+                If (type[m-1]=46 Or type[m-1]=47 Or type[m-1]=48) type[m]=46; Break
+                If (type[m+90]=46 Or type[m+90]=47 Or type[m+90]=48) type[m]=46; Break
+                If (type[m-90]=46 Or type[m-90]=47 Or type[m-90]=48) type[m]=46; Break
+              Endif
+              If (type[m]=42)
+                If (type[m+1]=46 Or type[m+1]=47 Or type[m+1]=48) type[m]=47; Break
+                If (type[m-1]=46 Or type[m-1]=47 Or type[m-1]=48) type[m]=47; Break
+                If (type[m+90]=46 Or type[m+90]=47 Or type[m+90]=48) type[m]=47; Break
+                If (type[m-90]=46 Or type[m-90]=47 Or type[m-90]=48) type[m]=47; Break
+              Endif
+              If (type[m]=45)
+                If (type[m+1]=46 Or type[m+1]=47 Or type[m+1]=48) type[m]=48; Break
+                If (type[m-1]=46 Or type[m-1]=47 Or type[m-1]=48) type[m]=48; Break
+                If (type[m+90]=46 Or type[m+90]=47 Or type[m+90]=48) type[m]=48; Break
+                If (type[m-90]=46 Or type[m-90]=47 Or type[m-90]=48) type[m]=48; Break
+              Endif
+            Loop
+          Loop
+          addnews="You Pull Down the Police Line"; turn=turn+1; Break
+        Endif
+      Endif
+      Delay(10)
+    Loop   
+  Endif
+
+  /////////////////////////////////////////////////////////////Operate
+  If (key=111) //Pressed o
+    selectscreen(1)
+    solidcolor(Black)
+    ml=length("Operate What?")
+    solidrectangle(5,5,15+ml*10,30)
+    Outtextxy(10,10,"Operate What?")
+    selectscreen(0)
+    bitbltscreen(1)
+    n=playerx+playery*90
+    dir=-2
+    Do 
+      key=readkey()
+      If (key=56) dir=-90 //up
+      If (key=52) dir=-1  //left
+      If (key=50) dir=90  //down
+      If (key=54) dir=1   //right
+      If (key=55) dir=-90-1 //upleft
+      If (key=57) dir=-90+1 //upright
+      If (key=49) dir=90-1  //downleft
+      If (key=51) dir=90+1  //downright
+      If (key=48) Break
+
+      If (dir!=-2)
+        If (type[n+dir]=2 Or type[n+dir]=44)  //////////////////////Open/Close Doors
+          close mci(doorclose); doorclose=open mci(path+"doorclose.mp3"); start mci(doorclose,500)
+          type[n+dir]=3; addnews="You Open the Door"; 
+          If (elevcon=4) 
+            elevcon=5; doorhp=10
+            qspawn=0
+            If (type[playerx+playery*90+1]=3) npc[0]="?"; npcx[0]=playerx+4; npcy[0]=playery
+            If (type[playerx+playery*90-1]=3) npc[0]="?"; npcx[0]=playerx-4; npcy[0]=playery
+          Endif
+          turn=turn+1; Break
+        Endif
+        If (type[n+dir]=3) 
+          close mci(doorclose); doorclose=open mci(path+"doorclose.mp3"); start mci(doorclose,500)
+          type[n+dir]=2; addnews="You Close the Door"; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=6) type[n+dir]=7; addnews="You Open the Window"; turn=turn+1; Break
+        If (type[n+dir]=7) type[n+dir]=6; addnews="You Close the Window"; turn=turn+1; Break
+        If (type[n+dir]=10) /////////////////////Turn On/Off Lamps
+          close mci(switch); switch=open mci(path+"switch.mp3"); start mci(switch)
+          type[n+dir]=12; addnews="You Turn Off the Lamp"; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=12)
+          close mci(switch); switch=open mci(path+"switch.mp3"); start mci(switch)
+          type[n+dir]=10; addnews="You Turn On the Lamp"; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=16) type[n+dir]=17; addnews="You Turn On the TV"; turn=turn+1; Break
+        If (type[n+dir]=17) type[n+dir]=16; addnews="You Turn Off the TV"; turn=turn+1; Break
+        If (type[n+dir]=24) type[n+dir]=25; addnews="You Fill the Bathtub"; turn=turn+1; Break
+        If (type[n+dir]=25) type[n+dir]=24; addnews="You Empty the Bathtub"; turn=turn+1; Break
+
+        If (type[n+dir]=23) //Flush Toilet
+          Do i=0,199
+            If (itemx[i]+itemy[i]*90=n+dir) 
+              item[i]=""
+            Endif
+          Loop
+          addnews="You Flush the Toilet"; turn=turn+1; Break
+        Endif
+
+        If (type[n+dir]=14) //Open/Close Cabinet
+          Do i=0,199
+            If (itemx[i]+itemy[i]*90=n+dir)
+              itemx[i]=playerx; itemy[i]=playery
+            Endif
+          Loop
+          close mci(draweropen); draweropen=open mci(path+"draweropen.wav"); start mci(draweropen)
+          type[n+dir]=15; addnews="You Open the Cabinet"; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=15)
+          Do i=0,199
+            If (itemx[i]+itemy[i]*90=playerx+playery*90)
+              itemx[i]=(n+dir)%90; itemy[i]=(n+dir)/90
+            Endif
+          Loop
+          close mci(draweropen); draweropen=open mci(path+"draweropen.wav"); start mci(draweropen)
+          type[n+dir]=14; addnews="You Close the Cabinet"; turn=turn+1; Break
+        Endif
+
+        If (type[n+dir]=28) //Open/Close Sink
+          Do i=0,199
+            If (itemx[i]+itemy[i]*90=n+dir)
+              itemx[i]=playerx; itemy[i]=playery
+            Endif
+          Loop
+          close mci(draweropen); draweropen=open mci(path+"draweropen.wav"); start mci(draweropen)
+          type[n+dir]=29; addnews="You Open the Sink Cabinet"; turn=turn+1; Break
+        Endif
+        If (type[n+dir]=29)
+          Do i=0,199
+            If (itemx[i]+itemy[i]*90=playerx+playery*90)
+              itemx[i]=(n+dir)%90; itemy[i]=(n+dir)/90
+            Endif
+          Loop
+          close mci(draweropen); draweropen=open mci(path+"draweropen.wav"); start mci(draweropen)
+          type[n+dir]=28; addnews="You Close the Sink Cabinet"; turn=turn+1; Break
+        Endif
+
+        If (type[n+dir]=40 And elevcon=0) /////////Operating Elevator Control Panels
+          elevcon=1
+          close mci(switch); switch=open mci(path+"switch.mp3"); start mci(switch)
+          addnews="You Call The Elevator"; turn=turn+1; Break
+        Endif
+
+        If (type[n+dir]=40 And elevcon=2 And type[playerx+playery*90]=36) /////////Operating Elevator Control Panels/Moving Elevator Down
+          elevcon=3; elevtime=15
+          If (type[n+dir+90]=39) type[n+dir+90]=38
+          If (type[n+dir-90]=39) type[n+dir-90]=38
+          close mci(switch); switch=open mci(path+"switch.mp3"); start mci(switch)
+          Do n=0,8099
+            If (type[n]!=36 And type[n]!=37 And type[n]!=38 And type[n]!=39 And type[n]!=40) type[n]=33
+          Loop
+          Do n=0,8099
+            If (type[n]=38)
+              If (type[n+1]=36) dir=-1
+              If (type[n-1]=36) dir=1
+              Do nn=1,6
+                type[n+dir*nn-90*2]=1; type[n+dir*(nn+1)-90*2]=1
+                type[n+dir*nn-90]=26; type[n+dir*(nn+1)-90]=1
+                type[n+dir*nn]=26; type[n+dir*(nn+1)]=2
+                type[n+dir*nn+90]=26; type[n+dir*(nn+1)+90]=1
+                type[n+dir*nn+90*2]=1; type[n+dir*(nn+1)+90*2]=1
+              Loop
+              Do nnn=0,8099
+                If (type[nnn]=33) type[nnn]=4
+              Loop
+              Do nnn=0,8099
+                If (nnn%90=(n+dir*7)%90 And type[nnn]=4) type[nnn]=1
+              Loop
+              Break
+            Endif
+          Loop
+          Do nn=0,49
+            npc[nn]=""
+          Loop
+          Do nn=0,199
+            item[nn]=""
+          Loop   
+          stop mci (wind)
+          stop mci (horrorambiance)
+          addnews="The Elevator Begins to Move"; turn=turn+1; Break
+        Endif
+
+      Endif
+      Delay(10)
+    Loop
+  Endif
+
+  ////////////////////////////////////////////////////////////Hold Breath
+  If (key=104) //Pressed h
+    If (breathheld=0) breathheld=1; addnews="You Hold Your Breath"
+    Else breathheld=0; addnews="You Begin Breathing"
+  Endif
+
+Endif
+
+  /////////////////////////////////////////////////////////////Sleeping
+  /*If (key=122) //Pressed z
+    asleep=1-asleep
+    If (asleep=0) addnews="You Wake Up"
+    If (asleep=1) addnews="You Fall Asleep"
+  Endif*/
+
+  /////////////////////////////////////////////////////////////Move turn
+  If (turn!=oldturn) 
+    oldturn=turn
+    If (grounditemhurt>0) grounditemhurt=grounditemhurt-1
+    ///////////////////////////////////////////////////////////After Effects
+
+    /////////Dizzy
+    If (fainted>0 And dizzy>0) dizzy=dizzy-2
+    If (dizzy<0) dizzy=0
+    If (heart=2 Or oxygen>15) dizzy=dizzy+2
+    If (dizzy>5) randommove=1
+
+    /////////RandomMove
+    If (randommove=1 And alive=1 And fainted<=0 And asleep=0)
+      dir=random(4); n=playerx+playery*90; randommove=0
+      If (dir=0 And type[n+90]!=1 And type[n+90]!=2) playery=playery+1
+      If (dir=1 And type[n+1]!=1 And type[n+1]!=2) playerx=playerx+1
+      If (dir=2 And type[n-90]!=1 And type[n-90]!=2) playery=playery-1
+      If (dir=3 And type[n-1]!=1 And type[n-1]!=2) playerx=playerx-1
+    Endif 
+
+    ///////Bleeding
+    If (bleeding>5)
+      bloodloss=bloodloss+2
+      btile=0
+      Do n=0,199
+        If (item[n]="Blood" And itemx[n]=playerx And itemy[n]=playery)
+          btile=1; Break
+        Endif 
+      Loop
+      If (btile=0) 
+        Do n=0,199
+          If (item[n]="") item[n]="Blood"; itemx[n]=playerx; itemy[n]=playery; Break
+        Loop
+      Endif
+    Endif
+    If (bleeding>0) 
+      bleeding=bleeding-2
+    Endif
+    If (bleeding<0) bleeding=0
+   
+    /////////Pain
+    If (pain>120) fainted=fainted+12; pain=50; addnews="You Faint from Pain"
+
+    ////////////Blood Around
+    If (bloodaround=1)
+      dirx=random(3)-1; diry=random(3)-1; bloodaround=0
+      Do n=0,199
+        If (item[n]="") item[n]="Blood"; itemx[n]=playerx+dirx; itemy[n]=playery+diry; Break
+      Loop      
+    Endif
+
+    ////////////Breathe
+    If (breathheld=1 Or trachea=1 Or lungs=2) oxygen=oxygen+1
+    If (breathheld=0 And trachea=0 And lungs<2 And oxygen>0) oxygen=oxygen-2
+    If (oxygen<0) oxygen=0
+    If (oxygen=25)
+      fainted=fainted+20
+      addnews="You Fainted"
+    Endif
+
+    ///////////Fainting
+    oldfaint=fainted
+    If (fainted>0)
+      breathheld=0
+      fainted=fainted-1
+    Endif
+    If (fainted<=0 And oldfaint>0) addnews="You Wake Up"
+
+    /////////Sick
+    If (stomach>=2) sick=sick+1
+ 
+    ////////Deathtime
+    If (heart=2) deathtime=deathtime+1
+    If (deathtime>10 And heart=2) addnews="You Die due to Heart Failure"; alive=0
+
+    ////////Items on Air Disappear
+    Do n=0,199
+      If (type[itemx[n]+itemy[n]*90]=8 Or type[itemx[n]+itemy[n]*90]=33)
+        item[n]=""
+      Endif
+    Loop
+
+    //////////Falling
+    If (type[playerx+playery*90]=8)
+      addnews="You Fall"
+      floor=floor-1
+      Do n=0,8099
+        If (type[n]=26) type[n]=8
+        If (type[n]!=8) type[n]=1
+        If (floor=0 And type[n]=8) type[n]=4
+        dd=random(10)
+        If (type[n]=1 And dd=0) type[n]=6     
+      Loop
+      Do nn=0,49
+        npc[nn]=""
+      Loop
+      Do nn=0,199
+        item[nn]=""
+      Loop   
+      If (floor=0) 
+        addnews="You Land on the Ground, taking Multiple Injuries"
+        g=0; gtimes=random(3)+5
+        ddd=random(2)
+        If (ddd=0) lungs=2
+        If (ddd=1) heart=2
+        ribs=2
+        grounddam:
+        dd=random(4); attmethod="Bash"; wep="Ground"; dam=80; bleeding=bleeding+20; g=g+1; d=1
+        If (dd=0) select2=random(10)+1; Goto headdam
+        If (dd=1) select2=random(2)+1 ; Goto torsodam
+        If (dd=2) select2=random(4)+1 ; Goto armsdam
+        If (dd=3) select2=random(4)+1 ; Goto legsdam
+        impactground:
+        If (g<=gtimes) Goto grounddam
+        spine=3
+        pain=90
+        addnews="You Land on the Ground, taking Multiple Injuries"
+      Endif
+    Endif
+
+    ////////////////////////Matches Go Out
+    If (matchtime<=0)
+    Do n=0,199
+      If (item[n]="Lit Match")
+        dd=random(10)
+        If (dd=0) 
+          item[n]="Used Match"
+        Endif
+      Endif
+    Loop
+    Do n=0,5
+      If (inv[n]="Lit Match")
+        dd=random(60)
+        If (dd=0) 
+          inv[n]="Used Match"
+          If (righthanditem="Lit Match") righthanditem="Used Match"
+          If (lefthanditem="Lit Match") lefthanditem="Used Match"
+          addnews="Your Lit Match Went Out"
+        Endif
+      Endif
+    Loop
+    Endif
+    If (matchtime>0) matchtime=matchtime-1
+    
+    /////////////Guilt is Full/Guilt Suicide 
+    If (guilt+exguilt>=100 And alive=1 And fainted<=0 And asleep=0)
+        dd=random(2)
+        If (dd=0) wepss="Knife"
+        If (dd=1) wepss="Hammer"
+        If (righthanditem!="Knife" And righthanditem!="Hammer")
+        If (lefthanditem!="Knife" And lefthanditem!="Hammer")
+        If (rightarmcon=1 Or righthandcon=1 Or rightarmb=1 Or righthandb=1)
+          If (leftarmcon=1 Or lefthandcon=1 Or leftarmb=1 Or lefthandb=1)
+            weps="Hit"
+          Endif
+          Else lefthanditem=wepss; weps=wepss
+        Endif
+        Else  righthanditem=wepss; weps=wepss
+        Endif
+        Endif
+        Do i=0,5
+          If (weps="Hit" Or inv[i]=weps) Break
+          If (inv[i]="") inv[i]=weps; Break
+          If (i=5)
+            Do n=0,199
+              If (item[n]="") item[n]=inv[i]; itemx[n]=playerx; itemy[n]=playery; Break
+            Loop
+            inv[i]=weps
+            Break
+          Endif
+        Loop
+        If (weps!="Knife" And weps!="Hammer") attmethod="Hit"
+        If (weps="Knife") attmethod="Stab"
+        If (weps="Hammer") attmethod="Bash"
+        wep=weps; dam=random(2)+20; d=1; suicidego=1
+        If (attmethod="Bash") dam=random(2)+14
+        dd=random(4) 
+        If (dd=0) select2=2; Goto headdam
+        If (dd=1) select2=1; Goto torsodam
+        If (dd>=2)
+          dd=random(4)
+          If (dd=0) select2=random(10)+1; Goto headdam
+          If (dd=1) select2=random(2)+1 ; Goto torsodam
+          If (dd=2) select2=random(4)+1 ; Goto armsdam
+          If (dd=3) select2=random(4)+1 ; Goto legsdam   
+        Endif 
+        suicide:  
+        suicidego=0
+      exguilt=exguilt-4
+    Endif
+
+    /////////////////////////Standing on the Dark
+    If (shadow[playerx+playery*90]<=0 And indark<=6)
+      indark=indark+1
+    Endif
+    If (indark>6 And guilt+exguilt<=100)
+      exguilt=exguilt+1
+    Endif
+    If (indark<=0 And exguilt>0)
+      exguilt=exguilt-1
+    Endif
+    If (guilt+exguilt>100)
+      exguilt=100-guilt
+    Endif
+    If (shadow[playerx+playery*90]>0 And indark>0) 
+      indark=0
+    Endif    
+    If (guilt<0) guilt=0
+ 
+    /////////////////////Elevator Control
+    If (elevcon=1)
+      elevtime=elevtime-1
+      If (elevtime<=0)
+        Do n=0,8099
+          If (type[n]=40)
+            If (type[n+90]=38) type[n+90]=39
+            If (type[n-90]=38) type[n-90]=39
+            Break
+          Endif
+        Loop   
+        elevcon=2
+      Endif
+    Endif
+    If (elevcon=3)
+      elevtime=elevtime-1
+      If (elevtime<=0) 
+        Do n=0,8099
+          If (type[n]=38) type[n]=39; Break
+        Loop
+          find=0
+          Do n=0,8099
+            If (type[n]=26) find=find+1
+          Loop
+          find2=random(find); find3=random(find)
+          find=0; ff=0; fff=0
+          Do n=0,8099
+            If (type[n]=26) find=find+1
+            If (find2=find And ff=0)
+              Do nn=0,199
+                If (item[nn]="")
+                  item[nn+1]="Deceased Person"; itemx[nn+1]=n%90; itemy[nn+1]=n/90
+                  dd=random(2)
+                  If (dd=0)
+                    item[nn]="Knife"; itemx[nn]=n%90; itemy[nn]=n/90
+                  Endif
+                  If (dd=1)
+                    item[nn]="Hammer"; itemx[nn]=n%90; itemy[nn]=n/90
+                  Endif
+                  ff=1; Break
+                Endif
+              Loop
+            Endif
+            If (find3=find And fff=0)
+              Do nn=0,199
+                If (item[nn]="")
+                  item[nn]="Flashlight (On)"; itemx[nn]=n%90; itemy[nn]=n/90
+                  fff=1; Break
+                Endif
+              Loop
+            Endif            
+          Loop
+        elevcon=4; qseen=0
+      Endif
+    Endif
+
+    /////////////////////Flashlight Charge
+    If (fcharge>0) fcharge=fcharge-1
+
+    ///////////////////////////////////Activating Bathroom Lights
+    If (blight=0 And type[playerx+playery*90]=22)
+      Do n=0,8099
+        shadow[n]=0
+      Loop
+      shadow[playerx+playery*90]=1
+      Do nn=0,20
+        Do n=0,8099
+          If (type[n]=22 And (shadow[n+1]=1 Or shadow[n-1]=1 Or shadow[n+90]=1 Or shadow[n-90]=1)) shadow[n]=1
+          If (shadow[n]=1 And type[n+1]=30) type[n+1]=31; blight=1; Break
+          If (shadow[n]=1 And type[n-1]=30) type[n-1]=31; blight=1; Break
+          If (shadow[n]=1 And type[n+90]=30) type[n+90]=31; blight=1; Break
+          If (shadow[n]=1 And type[n-90]=30) type[n-90]=31; blight=1; Break
+          If (shadow[n]=1 And type[n+1+90]=30) type[n+1+90]=31; blight=1; Break
+          If (shadow[n]=1 And type[n-1+90]=30) type[n-1+90]=31; blight=1; Break
+          If (shadow[n]=1 And type[n+1-90]=30) type[n+1-90]=31; blight=1; Break
+          If (shadow[n]=1 And type[n-1-90]=30) type[n-1-90]=31; blight=1; Break
+        Loop
+        If (blight=1) Break
+      Loop
+    Endif
+    If (blight=1 And type[playerx+playery*90+1]!=22 And type[playerx+playery*90-1]!=22 And type[playerx+playery*90+90]!=22 And type[playerx+playery*90-90]!=22)
+      Do n=0,8099
+        If (type[n]=31) type[n]=30
+      Loop
+      blight=0
+    Endif
+    
+    /////////////////////////////Standing on Water-Filled Bathtubs
+    If (washed=1)
+      If (type[playerx+playery*90]=25)
+        washed=2
+        addnews="You Wash the Blood of your Past from your Hands"
+        nowguilt=nowguilt-40
+      Endif
+    Endif
+
+    /////////////////////////////Standing on Grass
+    If (elevcon=6)
+      If (type[playerx+playery*90]=4)
+        grassend=grassend+1
+        If (grassend>5)
+          Do n=0,255 ////////Winning Text
+            select screen(1)
+            cls
+            forecolor(rgb(n,n,n))
+            Outtextxy(400-85,280,"You Escaped",2^5)
+            Outtextxy(400-70,315,"As a Guilt Free Man",2^3) 
+            key=readkey()
+            selectscreen(0)
+            bitbltscreen(1)
+            Delay(10)
+          Loop
+          waitkey()
+          Goto quit
+        Endif
+      Endif
+    Endif
+
+    //////////////////////////////Hint Time/ Hint Unlocks
+    If ((righthanditem!="" Or lefthanditem!="") And hintuse=1)
+      hint="Press <u> To Use Inventory Items"; hinttime=15; hintuse=0
+    Endif
+    If (inv[2]!="" And hintdrop=1)
+      hint="Press <d> To Drop Inventory Items"; hinttime=15; hintdrop=0
+    Endif
+    If (hint="" And hintthrow=1) 
+      hint="Press <t> To Throw Held Items"; hinttime=15; hintthrow=0
+    Endif
+    dd=playerx+playery*90
+    If ((type[dd+1]=2 Or type[dd-1]=2 Or type[dd+90]=2 Or type[dd-90]=2) And hintoperate=1 And hintused=0)
+      hint="Press <o> To Operate Objects Such as Lamps and Cabinets"; hinttime=15; hintoperate=0
+    Endif
+    If ((type[dd+1]=6 Or type[dd-1]=6 Or type[dd+90]=6 Or type[dd-90]=6) And hintbreak=1 And hintused=0)
+      hint="Press <b> To Break Objects Such as Tables and Windows"; hinttime=15; hintbreak=0
+    Endif
+    If (npc[0]="?" And hinthide=1)
+      hint="Hide in the Darkness! Something is Following You!"; hinttime=15; hinthide=0
+    Endif
+    If (exguilt>=1 And hintsuicide=1)
+      hint="Watch Your Guilt. It Will Slowly Increase When in the Dark"; hinttime=15; hintsuicide=0
+    Endif
+    If (guilt>50 And hintactions=1)
+      hint="Certain Actions Will Increase Or Decrease Your Maximum Guilt"; hinttime=15; hintactions=0
+    Endif
+    If (washed=1 And hbloodhands>0) hbloodhands=hbloodhands-1
+    If (washed=1 And hintbloodhands=1 And hbloodhands<=0)
+      hint="Is There Something That Can Wash the Blood off Your Hands?"; hintbloodhands=0; hinttime=15
+    Endif
+    If (hintportrait=1)
+      Do n=0,5
+        If (inv[n]="Portrait") hportrait=hportrait-1; Break
+      Loop
+      If (hportrait<=0) hint="Isn't There a Way To Permanently Get Rid of That Portrait?"; hintportrait=0; hinttime=15
+    Endif
+    
+    
+    If (hint!="")
+      hinttime=hinttime-1
+      If (hinttime<=0) hint=""; hinttime=15
+    Endif
+
+    ///////////////////////////////////////////////////////////Show News 2
+    If (addnews!="")
+      Do n=5,1 Step -1
+        news[n]=news[n-1]
+      Loop
+      news[0]=addnews
+      addnews=""
+    Endif
+    Do n=0,5
+      forecolor(rgb(255/(n+1),255/(n+1),255/(n+1)))
+      Outtextxy(10,600-20-15*n,news[n])
+    Loop
+    forecolor(White)
+
+    ///////////////Spawn ? 
+      ddd=0
+      Do n=0,49
+        If (npc[n]="?") ddd=1
+      Loop
+      If (ddd=0 And qspawn<=0)
+        dd=random(50)
+        If (dd=0)
+          find=0
+          Do nn=0,8099
+            If (type[nn]=5 And shadow[nn]<=0) find=find+1
+          Loop
+          find2=random(find)+1; find=0
+          Do nn=0,8099
+            If (type[nn]=5 And shadow[nn]<=0) find=find+1
+            If (find2=find)
+              Do nnn=0,49
+                If (npc[nnn]="") 
+                  stop mci (wind); cycle mci (horrorambiance)
+                  qseen=0; qpos=playerx+playery*90; qsearch=random(10)+10; qleaving=0; qspawn=100
+                  npc[nnn]="?"; npcx[nnn]=(nn%90); npcy[nnn]=(nn/90); addnews="You Hear Something Moving..."; Break
+                Endif
+              Loop
+              Break            
+            Endif
+          Loop
+        Endif
+      Endif
+      If (qspawn>0 And ddd=0) qspawn=qspawn-1
+
+    /////////////////////////////////////////////////////////////////////Move Enemies/Npcs
+    Do n=0,49
+      //////////////////////////////////?
+      If (npc[n]="?")
+        ploldlight=0
+        If (shadow[playerx+playery*90]>0) ploldlight=1
+        If (qfound=1) qpos=playerx+playery*90
+        If (qsearch<=0 And qleaving=0) /////Done Searching, Leaving Now
+          find=0
+          Do nn=0,8099
+            If (type[nn]=5 And shadow[nn]<=0) find=find+1
+          Loop
+          find2=random(find)+1; find=0
+          Do nn=0,8099
+            If (type[nn]=5 And shadow[nn]<=0) find=find+1
+            If (find=find2)
+              qpos=nn; qleaving=1; Break
+            Endif
+          Loop
+        Endif
+        Do nn=0,8099 
+          shadow[nn]=-1
+          w=type[nn]
+          If (w=0 Or (w>=2 And w<=5) Or (w>=19 And w<=26) Or w=46 Or w=47 Or w=48 Or w=43) shadow[nn]=0 //Tiles Npc can walk on
+        Loop
+        shadow[npcx[n]+npcy[n]*90]=1; dis=1
+        If (qpos=npcx[n]+npcy[n]*90 And qleaving=1) qleaving=0; npc[n]=""; stop mci (horrorambiance); cycle mci (wind); Break
+        If (qpos=npcx[n]+npcy[n]*90) //////Random Movement If NPC gets to Location And No Player Around
+          Do m=0,10
+            dir=random(8)
+            If (dir=0 And shadow[qpos-1]>=0) dir=-1; Break
+            If (dir=1 And shadow[qpos+1]>=0) dir=1; Break
+            If (dir=2 And shadow[qpos+90]>=0) dir=90; Break
+            If (dir=3 And shadow[qpos-90]>=0) dir=-90; Break
+            If (dir=4 And shadow[qpos+90+1]>=0) dir=90+1; Break
+            If (dir=5 And shadow[qpos+90-1]>=0) dir=90-1; Break
+            If (dir=6 And shadow[qpos-90+1]>=0) dir=-90+1; Break
+            If (dir=7 And shadow[qpos-90-1]>=0) dir=-90-1; Break
+            dir=0
+          Loop
+          qpos=npcx[n]+npcy[n]*90+dir; qsearch=qsearch-1
+        Endif
+        Do m=0,10 ////////////Check If Player Too Close
+          Do nn=0,8099
+            If (shadow[nn]=0)
+              If (shadow[nn+1]=dis) shadow[nn]=shadow[nn+1]+1
+              If (shadow[nn-1]=dis) shadow[nn]=shadow[nn-1]+1
+              If (shadow[nn+90]=dis) shadow[nn]=shadow[nn+90]+1
+              If (shadow[nn-90]=dis) shadow[nn]=shadow[nn-90]+1     
+              If (shadow[nn+90+1]=dis) shadow[nn]=shadow[nn+90+1]+1 
+              If (shadow[nn+90-1]=dis) shadow[nn]=shadow[nn+90-1]+1 
+              If (shadow[nn-90+1]=dis) shadow[nn]=shadow[nn-90+1]+1 
+              If (shadow[nn-90-1]=dis) shadow[nn]=shadow[nn-90-1]+1 
+            Endif
+          Loop
+          dis=dis+1
+          If (qfound=0 And ploldlight=1 And shadow[playerx+playery*90]>0 And shadow[playerx+playery*90]<=8) qfound=1
+          If (qfound=0 And ploldlight=0 And shadow[playerx+playery*90]>0 And shadow[playerx+playery*90]<=2) qfound=1
+          If (qfound=1 And ploldlight=0 And shadow[playerx+playery*90]>5) qfound=0      
+        Loop
+        Do nn=0,8099
+          shadow[nn]=-1
+          w=type[nn]
+          If (w=43 Or w=46 Or w=47 Or w=48) w=0
+          If (w=0 Or (w>=2 And w<=5) Or (w>=19 And w<=26) Or w=36 Or w=39) shadow[nn]=0 //Tiles Npc can walk on
+        Loop
+        shadow[npcx[n]+npcy[n]*90]=1; dis=1
+        Do m=0,60  ////////////////Pathfinding 
+          Do nn=0,8099
+            If (shadow[nn]=0)
+              If (shadow[nn+1]=dis) shadow[nn]=shadow[nn+1]+1
+              If (shadow[nn-1]=dis) shadow[nn]=shadow[nn-1]+1
+              If (shadow[nn+90]=dis) shadow[nn]=shadow[nn+90]+1
+              If (shadow[nn-90]=dis) shadow[nn]=shadow[nn-90]+1
+              If (shadow[nn+90+1]=dis) shadow[nn]=shadow[nn+90+1]+1 
+              If (shadow[nn+90-1]=dis) shadow[nn]=shadow[nn+90-1]+1 
+              If (shadow[nn-90+1]=dis) shadow[nn]=shadow[nn-90+1]+1 
+              If (shadow[nn-90-1]=dis) shadow[nn]=shadow[nn-90-1]+1 
+            Endif
+          Loop
+          dis=dis+1
+          If (shadow[qpos]>0)
+            pos=qpos; posx=0; posy=0
+            Do nnnn=0,60
+              dd=0
+              If (dd=0 And shadow[pos]-1=shadow[pos+1]) pos=pos+1; posx=-1; posy=0; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-1]) pos=pos-1; posx=1; posy=0; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos+90]) pos=pos+90; posx=0; posy=-1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-90]) pos=pos-90; posx=0; posy=1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos+90+1]) pos=pos+90+1; posx=-1; posy=-1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-90+1]) pos=pos-90+1; posx=-1; posy=1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos+90-1]) pos=pos+90-1; posx=1; posy=-1; dd=1
+              If (dd=0 And shadow[pos]-1=shadow[pos-90-1]) pos=pos-90-1; posx=1; posy=1; dd=1
+              If (pos=npcx[n]+npcy[n]*90)
+                If (playerx+playery*90=npcx[n]+posx+(npcy[n]+posy)*90) /////////////////Defeat ? From Low Guilt
+                  If (elevcon=5 And guilt<=10) 
+                    npc[m]=""; nowguilt=nowguilt-10; addnews="You Don't Feel Guilty Anymore"; elevcon=6
+                  Endif
+                Endif  
+                If (playerx+playery*90=npcx[n]+posx+(npcy[n]+posy)*90 And elevcon<=5) /////////////////Static Death
+		  npc[m]=""; nowguilt=100; alwaysdying=1
+                Endif
+                If (playerx+playery*90!=npcx[n]+posx+(npcy[n]+posy)*90)
+                  If (type[npcx[n]+posx+(npcy[n]+posy)*90]!=2) npcx[n]=npcx[n]+posx; npcy[n]=npcy[n]+posy  ///////////Npc Movement/ Breaking Doors
+                  If (type[npcx[n]+posx+(npcy[n]+posy)*90]=2)
+                    If (doorhp>0) addnews="You Hear Banging on a Door..."; doorhp=doorhp-1; close mci(bang); bang=open mci(path+"bang.wav"); start mci(bang); Break
+                    If (doorhp<=0) addnews="You Hear a Door Smash Open..."; type[npcx[n]+posx+(npcy[n]+posy)*90]=3; doorhp=8; close mci(doorclose); doorclose=open mci(path+"doorclose.mp3"); start mci(doorclose,500) ;Break
+                  Endif
+                Endif
+                Break
+              Endif
+            Loop
+            Break
+          Endif
+        Loop
+      Endif
+    Loop
+    
+  Endif
+  
+  ///////////////////////////////////////////////////////////Show News 3
+  If (addnews!="")
+    Do n=5,1 Step -1
+      news[n]=news[n-1]
+    Loop
+    news[0]=addnews
+    addnews=""
+  Endif
+  Do n=0,5
+    forecolor(rgb(255/(n+1),255/(n+1),255/(n+1)))
+    Outtextxy(10,600-20-15*n,news[n])
+  Loop
+  forecolor(White)
+
+  ////////////////////////////////////////////////////////////Death
+  If (forehead<=0 And alive=1) alive=0; addnews="Your Skull Broke, Ripping the Brain and Killing You Instantly"
+  If (neck<=0 And alive=1) alive=0; addnews="You were Decapitated"
+  If (righttemplecon=1 And alive=1) alive=0; addnews="Your Brain was Pierced, Killing You"
+  If (lefttemplecon=1 And alive=1) alive=0; addnews="Your Brain was Pierced, Killing You"
+  If (oxygen>30 And alive=1) alive=0; addnews="You Suffocated"
+  If (bloodloss>140 And alive=1) alive=0; addnews="You Bled to Death"
+  If (neckb=1 And alive=1) alive=0; addnews="You die instantly due to your Fractured Neck"
+  If (brain=1 And alive=1) alive=0
+  
+  If (alive=0) Pastestickercell (characters, 2, 800/2-80+8,600/2-65+8)
+  
+  //////////////////////////////////////////////////////////////Misc Body Part Changes
+  If (forehead<0) forehead=0
+  If (neck<0) neck=0
+  If (mouth<0) mouth=0
+  If (nose<0) nose=0
+  If (righttemple<0) righttemple=0
+  If (lefttemple<0) lefttemple=0
+  If (righteye<0) righteye=0
+  If (lefteye<0) lefteye=0
+  If (rightear<0) rightear=0
+  If (leftear<0) leftear=0
+  
+  If (uppertorso<0) uppertorso=0
+  If (lowertorso<0) lowertorso=0
+  If (back<0) back=0
+  
+  If (rightarm<0) rightarm=0
+  If (righthand<0) righthand=0
+  If (leftarm<0) leftarm=0
+  If (lefthand<0) lefthand=0
+
+  If (rightleg<0) rightleg=0
+  If (rightfoot<0) rightfoot=0
+  If (leftleg<0) leftleg=0
+  If (leftfoot<0) leftfoot=0
+  view=1
+  If (fainted>0 Or asleep=1 Or (lefteye<=0 And righteye<=0)) view=0 
+
+  ////////////////////////////////////////////////////////////Stance
+  If (rightlegcon=0 And rightfootb=0 And leftlegcon=0 And leftfootb=0) stance="Standing"
+  If ((rightlegcon=1 Or rightfootb=1) And leftlegcon=0 And leftfootb=0) stance="Limping"
+  If ((leftlegcon=1 Or leftfootb=1) And rightlegcon=0 And rightfootb=0) stance="Limping"
+  If ((rightlegcon=1 Or rightfootb=1) And (leftlegcon=1 Or leftfootb=1)) stance="Crawling"
+  If ((rightlegcon=1 Or rightfootb=1) And (leftlegcon=1 Or leftfootb=1) And (rightarmb=1 Or leftarmb=1 Or righthandb=1 Or lefthandb=1)) stance="Unable to Move"
+  If (spine>=2) stance="Unable to Move"
+  
+  ////////////////////////////////////////////////////////Delete Hand Items If Not In Inventory
+  dr=0; dl=0
+  Do n=0,5
+    If (inv[n]!="")
+      If (inv[n]=righthanditem) dr=1
+      If (inv[n]=lefthanditem) dl=1
+    Endif
+  Loop
+  If (dr=0 And righthanditem!="Hand") righthanditem="Hand"
+  If (dl=0 And lefthanditem!="Hand") lefthanditem="Hand"
+
+  /////////////////////////////////////////////////////////Escape Menu
+  If (key=27) //Pressed esc
+    pick=0
+    textd=0
+    Do
+      selectscreen(1)
+      key=readkey()
+      solidcolor(Black)
+      solidrectangle(5,5,15+10*10,30+15*textd)
+      textd=0
+        Outtextxy(22,25+pick*15,">")
+        Outtextxy(30,25+textd*15,"Return"); textd=textd+1
+        Outtextxy(30,25+textd*15,"Quit Game"); textd=textd+1
+        Outtextxy(30,25+textd*15,"Controls"); textd=textd+1
+        If (hintsenabled=1) Outtextxy(30,25+textd*15,"Disable Hints"); textd=textd+1
+        If (hintsenabled=0) Outtextxy(30,25+textd*15,"Enable Hints "); textd=textd+1
+      Outtextxy(10,10,"Menu")
+      selectscreen(0)
+      bitbltscreen(1)
+      If (key=56 And pick>0)       pick=pick-1
+      If (key=50 And pick<textd-1) pick=pick+1
+      If (key=53) 
+        If (pick=0) Break
+        If (pick=1) Goto quit
+        If (pick=3) hintsenabled=1-hintsenabled
+        If (pick=2)
+          Do  //////////////////Control Menu
+            selectscreen(1)
+            key=readkey()
+            cls
+              textd=0
+              Outtextxy(30,25+textd*15,"Numpad to Move"); textd=textd+1
+              Outtextxy(30,25+textd*15,"Numpad to Select From Menus"); textd=textd+1         
+              Outtextxy(30,25+textd*15,"0 On Numpad to Cancel Commands"); textd=textd+1     
+              textd=textd+1
+              Outtextxy(30,25+textd*15,"s - Hurt Yourself"); textd=textd+1
+              Outtextxy(30,25+textd*15,"b - Break Certain Objects"); textd=textd+1
+              Outtextxy(30,25+textd*15,"p - Pick Up Items"); textd=textd+1
+              Outtextxy(30,25+textd*15,"d - Drop Items"); textd=textd+1
+              Outtextxy(30,25+textd*15,"i - Check Inventory"); textd=textd+1
+              Outtextxy(30,25+textd*15,"e - Equip Item From Inventory"); textd=textd+1
+              Outtextxy(30,25+textd*15,"t - Throw Items From Hands"); textd=textd+1
+              Outtextxy(30,25+textd*15,"u - Use Certain Items"); textd=textd+1
+              Outtextxy(30,25+textd*15,"h - Hold Breath"); textd=textd+1
+              Outtextxy(30,25+textd*15,"o - Operate Certain Objects"); textd=textd+1
+            selectscreen(0)
+            bitbltscreen(1)
+            If (key=48 Or key=27) Break
+            Delay(10)
+          Loop
+          Break
+        Endif
+      Endif   
+      If (key=48 Or key=27) Break
+      Delay(10)
+    Loop      
+  Endif
+
+  ///////////////////////////////////////////////////////////////Misc
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(10)
+Loop
+
+quit:
+select screen(1)
+selectscreen(0)
+bitbltscreen(1)
+close blt (imb)
+close image (imi)
+close sticker strip (characters)
+close sticker strip (itemtiles)
+close mci (wind)
+close mci (tvstatic)
+close mci (draweropen)
+close mci (suspense)
+close mci (horrorambiance)
+close mci (doorclose)
+close mci (switch)
+close mci (bang)
+close mci (badguilt)
+close mci (goodguilt)
+quit

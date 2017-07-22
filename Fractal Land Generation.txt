@@ -1,0 +1,183 @@
+Win(null)
+randomize
+
+Int type[16641]
+Int xx[16641]
+Int yy[16641]
+Int zz[16641]
+Int ulist[16641]
+Int clines[16641]
+
+x=0;y=0;z=0
+loa=4
+
+Do n=0,16640
+  type[n]=0
+  xx[n]=n%129
+  yy[n]=n/129
+  zz[n]=-1
+  ulist[n]=0  //already used/set height to list
+  clines[n]=0  //tiles with cross lines on them
+Loop
+
+zz[0]=random(50)
+zz[128]=random(50)
+zz[16640-128]=random(50)
+zz[16640]=random(50)
+ulist[0]=1
+ulist[128]=1
+ulist[16640-128]=1
+ulist[16640]=1
+
+Do
+  select screen(1)
+  cls
+  key=readkey() 
+
+  ///////////////////////Diamond Step
+  Do n=0,16640
+    If (ulist[n]=1)
+      Do m=1,200
+        loa=4
+        If (xx[n]+m<=128 And yy[n]+m<=128) clines[n+m+m*129]=1;loa=loa-1
+        If (xx[n]-m>=0 And yy[n]+m<=128) clines[n-m+m*129]=1;loa=loa-1
+        If (xx[n]+m<=128 And yy[n]-m>=0) clines[n+m-m*129]=1;loa=loa-1
+        If (xx[n]-m>=0 And yy[n]-m>=0) clines[n-m-m*129]=1;loa=loa-1
+        If (loa=4) Break
+      Loop
+    Endif
+  Loop
+  Do n=0,16640
+    If (clines[n]=1 And clines[n+1+129]=1 And clines[n+1-129]=1 And clines[n-1+129]=1 And clines[n-1-129]=1 And ulist[n]=0)
+      c1=0; c2=0; c3=0; c4=0; dis=0; loa=4
+      Do m=1,200
+        loa=4
+        If (ulist[n+m+m*129]=1) c1=n+m+m*129; loa=loa-1; dis=m
+        If (ulist[n-m+m*129]=1) c2=n-m+m*129; loa=loa-1; dis=m
+        If (ulist[n-m-m*129]=1) c3=n-m-m*129; loa=loa-1; dis=m
+        If (ulist[n+m-m*129]=1) c4=n+m-m*129; loa=loa-1; dis=m
+        If (loa=0) Break
+      Loop
+      zz[n]=(zz[c1]+zz[c2]+zz[c3]+zz[c4])/4+random(dis)-dis/2; ulist[n]=1
+    Endif
+  Loop
+  /////////////////////////////Display Tiles
+  Do n=0,16640
+    solidcolor(Darkgreen)
+    If (zz[n]=-1) solidcolor(Black)
+    If (clines[n]=1) solidcolor(Darkred)
+    If (zz[n]>38) solidcolor(White)
+    If (zz[n]<=15 And zz[n]>=12) solidcolor(Yellow)
+    If (zz[n]<12) solidcolor(Darkblue)
+    If (zz[n]<=38 And zz[n]>15) solidcolor(Darkgreen)    
+    solidrectangle(xx[n]*5,yy[n]*5,xx[n]*5+5,yy[n]*5+5)
+    clines[n]=0
+    //If (ulist[n]=1) Outtextxy(xx[n]*15,yy[n]*15,itot(zz[n]))
+  Loop
+  If (key=27) Goto quit
+  Delay(200) 
+  selectscreen(0)
+  bitbltscreen(1)
+  select screen(1)
+  cls
+  ///////////////////////Square Step
+  Do n=0,16640
+    If (ulist[n]=1)
+      Do m=1,200
+        loa=4
+        If (xx[n]+m<=128) clines[n+m]=1;loa=loa-1
+        If (xx[n]-m>=0) clines[n-m]=1;loa=loa-1
+        If (yy[n]+m<=128) clines[n+m*129]=1;loa=loa-1
+        If (yy[n]-m>=0) clines[n-m*129]=1;loa=loa-1
+        If (loa=4)
+          Break
+        Endif
+      Loop     
+    Endif
+  Loop
+  Do n=0,16640
+    dis=0
+    If (clines[n]=1 And ulist[n]=0)
+      If (yy[n]=0 And clines[n+1]=1 And clines[n-1]=1 And clines[n+129]=1)
+        c1=0; c2=0; c3=0; c4=0; dis=200; loa=4
+        Do m=1,200
+          loa=3
+          If (ulist[n+m]=1) c1=n+m; loa=loa-1; dis=m
+          If (ulist[n-m]=1) c2=n-m; loa=loa-1; dis=m
+          If (ulist[n+m*129]=1) c3=n+m*129; loa=loa-1; dis=m
+          If (loa=0) Break
+        Loop
+        zz[n]=(zz[c1]+zz[c2]+zz[c3])/3+random(dis)-dis/2; ulist[n]=1
+        Endif
+      If (xx[n]=128 And clines[n-129]=1 And clines[n-1]=1 And clines[n+129]=1)
+        c1=0; c2=0; c3=0; c4=0; dis=200; loa=4
+        Do m=1,200
+          loa=3
+          If (ulist[n-m]=1) c2=n-m; loa=loa-1; dis=m
+          If (ulist[n+m*129]=1) c3=n+m*129; loa=loa-1; dis=m
+          If (ulist[n-m*129]=1) c4=n-m*129; loa=loa-1 ; dis=m
+          If (loa=0) Break
+        Loop
+        zz[n]=(zz[c2]+zz[c3]+zz[c4])/3+random(dis)-dis/2; ulist[n]=1
+        Endif
+      If (yy[n]=128 And clines[n+1]=1 And clines[n-1]=1 And clines[n-129]=1)
+        c1=0; c2=0; c3=0; c4=0; dis=200; loa=4
+        Do m=1,200
+          loa=3
+          If (ulist[n+m]=1) c1=n+m; loa=loa-1; dis=m
+          If (ulist[n-m]=1) c2=n-m; loa=loa-1; dis=m
+          If (ulist[n-m*129]=1) c4=n-m*129; loa=loa-1 ; dis=m
+          If (loa=0) Break
+        Loop
+        zz[n]=(zz[c1]+zz[c2]+zz[c4])/3+random(dis)-dis/2; ulist[n]=1
+      Endif
+      If (xx[n]=0 And clines[n+1]=1 And clines[n-129]=1 And clines[n+129]=1)
+        c1=0; c2=0; c3=0; c4=0; dis=200; loa=4
+        Do m=1,200
+          loa=3
+          If (ulist[n+m]=1) c1=n+m; loa=loa-1; dis=m
+          If (ulist[n+m*129]=1) c3=n+m*129; loa=loa-1; dis=m
+          If (ulist[n-m*129]=1) c4=n-m*129; loa=loa-1 ; dis=m
+          If (loa=0) Break
+        Loop
+        zz[n]=(zz[c1]+zz[c3]+zz[c4])/3+random(dis)-dis/2; ulist[n]=1
+      Endif
+      If (xx[n]!=0 And yy[n]!=0 And xx[n]!=128 And yy[n]!=128 And clines[n+1]=1 And clines[n-129]=1 And clines[n+129]=1 And clines[n-1]=1)
+        c1=0; c2=0; c3=0; c4=0; dis=200; loa=4
+        Do m=1,200
+          loa=4
+          If (ulist[n+m]=1) c1=n+m; loa=loa-1; dis=m
+          If (ulist[n-m]=1) c2=n-m; loa=loa-1; dis=m
+          If (ulist[n+m*129]=1) c3=n+m*129; loa=loa-1; dis=m
+          If (ulist[n-m*129]=1) c4=n-m*129; loa=loa-1 ; dis=m
+          If (loa=0) Break
+        Loop
+        zz[n]=(zz[c1]+zz[c2]+zz[c3]+zz[c4])/4+random(dis)-dis/2; ulist[n]=1
+        Endif
+      Endif
+  Loop
+
+  /////////////////////////////Display Tiles
+  Do n=0,16640
+    solidcolor(Darkgreen)
+    If (zz[n]=-1) solidcolor(Black)
+    If (clines[n]=1) solidcolor(Darkred)
+    If (zz[n]>38) solidcolor(White)
+    If (zz[n]<=15 And zz[n]>=12) solidcolor(Yellow)
+    If (zz[n]<12) solidcolor(Darkblue)
+    If (zz[n]<=38 And zz[n]>15) solidcolor(Darkgreen)
+    solidrectangle(xx[n]*5,yy[n]*5,xx[n]*5+5,yy[n]*5+5)
+    clines[n]=0
+    //If (ulist[n]=1) Outtextxy(xx[n]*15,yy[n]*15,itot(zz[n]))
+  Loop
+
+
+  If (key=27) Goto quit
+  Delay(200)
+  selectscreen(0)
+  bitbltscreen(1)
+Loop
+quit:
+selectscreen(0)
+bitbltscreen(1)
+quit

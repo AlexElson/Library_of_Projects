@@ -1,0 +1,92 @@
+Win(null)
+randomize
+
+path=project()+"tileset.bmp"
+imi = open image (path)
+imb = open blt (imi)
+
+Text level1[100]
+Text level2[100]
+Text level3[100]
+Text type[196]
+Do n=0,195
+  type[n]="000"
+Loop
+
+mx=0;my=0;mz=0
+paint="001"
+tilex=""
+tiley=""
+warpp=-2
+warpp2=-2
+
+Do
+  select screen(1)
+  cls
+  key=readkey()
+  readmouse(mx,my,mz)
+  bitblt (imb,500,0)
+  color(Yellow)
+   
+  ///////////Select Paint
+  Do y=0,9
+    Do x=0,9
+      If (mx>x*32+500 And mx<x*32+32+500)
+        If (my>y*32 And my<y*32+32) 
+          rectangle(x*32+500,y*32,x*32+32+500,y*32+32)
+          If (mz=1)
+            paint="1"+itot(y)+itot(x)
+            If (y=0 And (x=0 Or x=1 Or x=3)) paint="0"+itot(y)+itot(x)
+            If (y=1 And (x=9)) paint="0"+itot(y)+itot(x) 
+            If (y=3 And (x=6 Or x=9)) paint="0"+itot(y)+itot(x) 
+            If (y=4) paint="0"+itot(y)+itot(x) 
+          Endif
+        Endif
+      Endif
+    Loop
+  Loop 
+
+  //////////Tiles
+  Do n=0,195
+    xx=n%14;yy=n/14; imx=0; imy=0
+    If (mx>xx*32 And mx<xx*32+32 And my>yy*32 And my<yy*32+32 And mz=1) type[n]=paint
+    If (mx>xx*32 And mx<xx*32+32 And my>yy*32 And my<yy*32+32 And mz=2) paint=type[n]
+    If (mx>xx*32 And mx<xx*32+32 And my>yy*32 And my<yy*32+32 And key=48)
+      warpp=n
+    Endif
+    If (mx>xx*32 And mx<xx*32+32 And my>yy*32 And my<yy*32+32 And key=49)
+      warpp2=n
+    Endif
+
+    tilex=extract(type[n],2,2); tiley=extract(type[n],1,1)
+    imx=ttoi(tilex)*32; imy=ttoi(tiley)*32
+    bitblt (imb, xx*32,yy*32, 32,32, imx,imy)
+
+    If (mx>xx*32 And mx<xx*32+32 And my>yy*32 And my<yy*32+32) color(Yellow);rectangle(xx*32,yy*32,xx*32+31,yy*32+31)
+    If (n=warpp Or n=warpp2) color(Red); rectangle(xx*32,yy*32,xx*32+31,yy*32+31)
+  Loop
+
+  Display paint
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(10)
+  If (key=27) Break
+Loop
+
+close blt (imi)
+close image (imb)
+
+open a ("Write newlevel.txt")
+Do m=0,2
+  Do n=0,195
+    write text a (extract(type[n],m,m),0)
+  Loop
+  write line a ("",0)
+Loop
+write line a (itot(warpp),0)
+write line a (itot(warpp2),0)
+close a
+
+quit
+
+

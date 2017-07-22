@@ -1,0 +1,552 @@
+Win(null)[]
+randomize
+
+path=project()+"tileset.bmp"
+imi = open image (path)
+imb = open blt (imi)
+
+path=project()+"Misc Stickers\\"
+shadow     = open sticker (path+"shadow")
+moneypic   = open sticker (path+"money")
+moneyitem  = open sticker (path+"moneyitem")
+bushblade1 = open sticker (path+"bushblade1")
+bushblade2 = open sticker (path+"bushblade2")
+treetop = open sticker (path+"treetop")
+heart =  open sticker (path+"heart")
+
+path=project()+"fung si yan\\"
+body = open sticker strip (path+"fungsiyanbodyidle",4)
+head = open sticker strip (path+"fungsiyanhead",4)
+walk0 = open sticker strip (path+"fungsiyanbodywalk0",5)
+walk1 = open sticker strip (path+"fungsiyanbodywalk1",5)
+walk2 = open sticker strip (path+"fungsiyanbodywalk2",5)
+walk3 = open sticker strip (path+"fungsiyanbodywalk3",5)
+attackani = open sticker strip (path+"fungsiyanattack",4)
+fdead = open sticker (path+"fungsiyandead")
+
+path=project()+"Weapons\\"
+gunpic = open sticker strip (path+"pistol",4)
+bulletpic= open sticker (path+"bullet")
+
+path=project()+"Enemies\\"
+eshooter = open sticker (path+"shooter")
+
+playerx=7.0; playery=7.0
+speed=0.05; dir=2
+cpx=7.0; cpy=7.0
+totalhp=3; hp=3 //cover each other fully when at 67 or more health
+hpadd=0
+attack=0; gun=0; shootbullet=0
+Float bx[50]; Float by[50]; Float ba[50]; Float bcx[50]; Float bcy[50]
+Do n=0,49
+  bx[n]=-2; by[n]=-2; ba[n]=0
+Loop
+grabbing=0
+signread=0
+walk=0; walka=2; wtime=4; wd=0
+Int a; Int b; Int aa; Int bb
+mx=0; my=0; mz=0
+Float bushbladex[4]; Float bushbladey[4]; Float bushbladecx[4]; Float bushbladecy[4]; bushb=0; bushbx=0.0; bushby=0.0; bushbtime=25
+money=0
+showchestitem=0; showchestitemx=0; showchestitemy=0; showchestitemin="money"
+
+lvl=0
+Text sign[100]
+Int chest[100]
+Int warp1[100]; Int warpto1[100]; Int warp1lvl[100]
+Int warp2[100]; Int warpto2[100]; Int warp2lvl[100]
+Int warp3[100]; Int warpto3[100]; Int warp3lvl[100]
+Do n=0,99
+  sign[n]=""
+  warp1[n]=-2; warpto1[n]=-2; warp1lvl[n]=0
+  warp2[n]=-2; warpto2[n]=-2; warp2lvl[n]=0
+  warp3[n]=-2; warpto3[n]=-2; warp3lvl[n]=0
+Loop
+Text level1[100]
+Text level2[100]
+Text level3[100]
+Text enemy[10]
+Int ex[1000]
+Int ey[1000]
+Float ebx[10]
+Float eby[10]
+Float epause[10]
+Int eepause[10]
+Float bxc[10]; Float byc[10]; Float deltabx; Float deltaby; Float deltabc
+
+Int edead[10]
+Int edir[10]
+
+/*level1[0]="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011111100000000000000000000000101010000000000000000000000000100000000000000000000000000000000000000"
+level2[0]="4444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444400000044444444444444444444444040404444444444444444444444444044444444444444444444444444444444444444"
+level3[0]="5555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555566666655555555555555555555555859595555555555555555555555555755555555555555555555555555555555555555"
+chest[0]=25
+warp1[0]=3; warpto1[0]=193-14; warp1lvl[0]=1
+sign[0]="It's dangerous to go alone! Take this."
+if (lvl=0)
+  enemy[0]="Shooter"
+  ex[0]=4; ey[0]=4; edead[0]=0
+  enemy[1]="Shooter"
+  ex[1]=8; ey[1]=6; edead[1]=0
+Endif*/
+
+//lvl=7
+changelevel:
+
+Do n=0,9
+  enemy[n]=""; ex[n]=-2; ey[n]=-2; edead[n]=1
+Loop
+
+level1[0]="0000010010000000000100100000000001001000000000010010000000011100111000000100000010000001010000100000010000001000000100000010110001000000101100011111111000000000000000000110000000000001100000000000"
+level2[0]="0000060060000000000600600000004006006000400000060060000000066600666000000600000060000006000040600040060000006000000604000060550006000000606600066666666000000000000000000550000000400006600000000000"
+level3[0]="0000080080000000010800800000009008008000900000080080000100088800888000000800000080000008070090800090080000008000010809000080870008000000806700088888888000000000000000000870000100900006700000000000"
+sign[0]=" - The Adventure"
+warp1[0]=6; warpto1[0]=188-14; warp1lvl[0]=1
+
+level1[1]="0000010010000000000100100000000001001000000011111111110000100000000100001000000001000010000000010000111111111100001000000101000010000000010000100000000100001111001111000000010010000000000100100000"
+level2[1]="0000060060000004000600600000000006006000000066660066660000600000000600006000000046000060000000060000600066666600006000000006000060000000060000600040000600006666006666000000060060000400000600600000"
+level3[1]="0000080080000009000800800100000008008000000088882288880010800000000800008000000098000080000000080000822288888800008000000708010080000000080000800090000800008888008888000100080080000900000800800000"
+sign[1]="Punch with s key to break the bushes."
+warp1[1]=188; warpto1[1]=6+14; warp1lvl[1]=0
+warp2[1]=6; warpto2[1]=188-14; warp2lvl[1]=2
+
+level1[2]="0000010010000000000100100000000001001000000000010011111000000100100010011111001010100110000010001001000000100010010001111111100100000110000001000000100000011111001000000000010010000000000100100000"
+level2[2]="0000060060000000000600600000000006006000000400060066666000000600000060066666000000600600000000006006000000000060060006666666600600040060000006000000600000066666006000000000060060004000000600600000"
+level3[2]="0001080080000000000800800100000008008000000900080088888000000800200080088888002040800840000020008008000000200080080008888888801800090780000008000000800000088888008000010000080080009000000800800000"
+sign[2]="Press a in front of chests to open them."
+chest[2]=5
+warp1[2]=188; warpto1[2]=6+14; warp1lvl[2]=1
+warp2[2]=6; warpto2[2]=188-14; warp2lvl[2]=3
+
+level1[3]="0000010010000011000100100000111111111111000010000000010000100000000100001010000001000010000000010000100000000100001000000001000010000010010000100010000100001111001111000000010010000000000100100000"
+level2[3]="0000060060000055000600600040666666006666000060000000060000600000000600006000000006000460000000060000600000000600006000400006000060000000060000600000000600006666006666000000060060004000000600600000"
+level3[3]="0010080080000087000800800090678888228888000080000000080000800000000800008020000008000980000000380100800000000800008000900008000080300020080000800070000800108888008888000000080080009000000800800000"
+sign[3]="Punch enemies to kill. Your health is shown by hearts."
+warp1[3]=188; warpto1[3]=6+14; warp1lvl[3]=2
+warp2[3]=6; warpto2[3]=188-14; warp2lvl[3]=4
+If (lvl=3)
+  enemy[0]="Shooter"; ex[0]=9; ey[0]=5; edead[0]=0
+Endif
+
+level1[4]="0000000000000000101111110000000010000101000000111111000000001111110000100011111100000000000000001000000000000000000100000100000000000000000001000000000010000100000010001110100011001001011100101101"
+level2[4]="0000000000000000002222220000000423131200000000222222004000001311110000000013111100000040000000000000000000000400000000000600000000400000000006000000000060000600400060006660600066006006066600606606"
+level3[4]="0000000000010000205666670000000906969102000100233334009001107744680000200028115300110090000111002001000011100901011200000800110000901100000008000001000080000800900080008880800088008008088800808808"
+warp1[4]=188; warpto1[4]=6+14; warp1lvl[4]=3
+warp2[4]=92; warpto2[4]=188-14-14; warp2lvl[4]=5
+
+level1[5]="1111111111111111111111111111111111111111111111111111111111111111111111111110000000011111100000000111111000000001111110000011111111101000111111111000001111111110000011111111100000111111111111111111"
+level2[5]="0000000000000000000000000000000000000000000000311111111300003111111113000033111111130000313131131300003111111113000031113131100000310111300000003111113000000033113130000000311111300000000111110000"
+level3[5]="6666666666666666666666666666666666666666666666544444464466665111111514666656999999946666596969969466665999999994666659996920066666597999466666665999994666666656996946666666599999466666666000006666"
+sign[5]="Press e to restore 1 heart, at the cost of 5 money"
+warp1[5]=188-14; warpto1[5]=106; warp1lvl[5]=4
+warp2[5]=81; warpto2[5]=156; warp2lvl[5]=6
+If (lvl=5)
+  enemy[5]="Shooter"; ex[5]=11; ey[5]=6; edead[5]=0
+Endif
+
+level1[6]="1111111111111111111111111111110000000000011101001110010111011111111101110111111111011101111111110111011111111111110111111111111101111111111111011111111111110111111111111101111111111111111111111111"
+level2[6]="0311111111111303111111111113031111111111130313113131131303131100011313031300000003130313000000031303130000000010031300000000000313000000000003130000000000031300000000000313000000000000100000000000"
+level3[6]="6544444444444465111111111114659999999999946592992039939465940066600594659466666665946594666666659465946666666606659466666666666594666666666665946666666666659466666666666594666666666666066666666666"
+warp1[6]=156+14; warpto1[6]=81+14; warp1lvl[6]=5
+warp2[6]=96; warpto2[6]=49+14; warp2lvl[6]=7
+If (lvl=6)
+  enemy[0]="Shooter"; ex[0]=5; ey[0]=3; edead[0]=0
+  enemy[1]="Shooter"; ex[1]=10; ey[1]=3; edead[1]=0
+Endif
+
+level1[7]="1111111111111111111111111111111111111111111111110001111111110000000111111100000001111111001110011111110000000111111100000001111111110001111111111100011111111111101111111111111111111111111111111111"
+level2[7]="0000000000000000000011100000000011111110000000113111100000031111111300000311131133000003310001130000031111131300000311131113000000131113100000000311130000000000313000000000000000000000000000000000"
+level3[7]="6666666666666666666646466666666648151746666666136992166666659999999466666599969964666665698799946666659999969466666599969994666666039992066666666599946666666666392666666666666666666666666666666666"
+sign[7]="To shoot, press d while holding the gun"
+warp1[7]=49; warpto1[7]=96-14; warp1lvl[7]=6
+warp2[7]=161; warpto2[7]=59+14; warp2lvl[7]=8
+
+level1[8]="0100011100000001111111010110011111110011000111111000011000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001100000000000011000"
+level2[8]="0231122200000002222211000000011111110000000111110000000000040000000000000400000000004444444444444444444444444444444444444444444444444444444444444444444444000000000000000000000005500000000000066000"
+level3[8]="0069983400110002333448021220074648130122110215134011122100080000012210000800000001106666666666666600000000000000020202020202020000000000000066666666666666000000000000000000000008700000000000067000"
+chest[8]=10
+warp1[8]=59; warpto1[8]=161-14; warp1lvl[8]=7
+warp2[8]=125; warpto2[8]=113; warp2lvl[8]=9
+If (lvl=8)
+  enemy[0]="Shooter"; ex[0]=12; ey[0]=2; edead[0]=0
+  enemy[1]="Shooter"; ex[1]=11; ey[1]=11; edead[1]=0
+Endif
+
+level1[9]="0000000000000000010000100000001000000000000000100000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010100000000000000000010000"
+level2[9]="0000000000000000000000000000000000000000000000000434000000000004440000000000004000004444444444444444444444444444444444444444444444444444444444444444444444000000000000000060000000000000000000000000"
+level3[9]="0000000000000000050100200010002001100001000000200898000200110006860000000000008001006667666666667600000000330000020202023320200000000033000066676666766666000000000110000080200100000001000000020010"
+warp1[9]=112; warpto1[9]=124; warp1lvl[9]=8
+If (lvl=9)
+  enemy[0]="Shooter"; ex[0]=6; ey[0]=2; edead[0]=0
+  enemy[1]="Shooter"; ex[1]=7; ey[1]=1; edead[1]=0
+  enemy[2]="Shooter"; ex[2]=8; ey[2]=0; edead[2]=0
+Endif
+
+
+
+
+Text type[196]
+Do n=0,195
+  type[n]=extract(level1[lvl],n,n)+extract(level2[lvl],n,n)+extract(level3[lvl],n,n)
+Loop
+died=-1
+
+
+Do
+  select screen(1)
+  cls
+  key=readkey()
+  readmouse(mx,my,mz)
+  walk=0
+
+  /////////////////////////////////////////////////////////////Movement
+  If ((my<playery*32+18) And attack=0 And died=-1) //328
+    d=speed; dir=0; walk=1
+    Do n=0,195
+      Do m=speed,0 Step -0.03125
+        a=playerx; b=playery-m; aa=playerx+1-0.03125
+        xx=n%14; yy=n/14
+        collide=extract(type[n],0,0)
+        Do mmm=0,9
+          If (ex[mmm]+ey[mmm]*14=a+b*14 Or ex[mmm]+ey[mmm]*14=aa+b*14) collide="0"
+        Loop
+        If ((((xx+yy*14=a+b*14 Or xx+yy*14=(aa)+b*14) And collide="1") Or playery<0.03125) ) d=m-0.03125
+
+        //////////////////////////////////////////////////////////////Chest
+        If ((xx+yy*14=a+b*14 Or xx+yy*14=(aa)+b*14) And type[n]="104" And dir=0 And grabbing=1) 
+          type[n]="105"; money=money+chest[lvl]; showchestitem=1; showchestitemx=xx; showchestitemy=yy; showchestitemin="money"
+        Endif
+        If ((xx+yy*14=a+b*14 Or xx+yy*14=(aa)+b*14) And type[n]="108" And dir=0 And grabbing=1) 
+          type[n]="105"; showchestitem=1; showchestitemx=xx; showchestitemy=yy; showchestitemin="gun"; gun=1
+        Endif
+        If ((xx+yy*14=a+b*14 Or xx+yy*14=(aa)+b*14) And type[n]="109" And dir=0 And grabbing=1) 
+          type[n]="105"; showchestitem=1; showchestitemx=xx; showchestitemy=yy; showchestitemin="heartcontainer"; totalhp=totalhp+1; hp=totalhp
+        Endif
+
+      Loop
+    Loop
+    If (d>0) playery=playery-d
+  Endif
+
+  If ((mx<playerx*32+18) And attack=0 And died=-1) //331
+    d=speed; dir=1; walk=1
+    Do n=0,195
+      Do m=speed,0 Step -0.03125
+        a=playerx-m; b=playery; bb=playery+1-0.03125
+        xx=n%14; yy=n/14
+        collide=extract(type[n],0,0)
+        If (((xx+yy*14=a+b*14 Or xx+yy*14=a+(bb)*14) And collide="1") Or playerx<0.03125) d=m-0.03125
+      Loop
+    Loop
+    If (d>0) playerx=playerx-d
+  Endif
+
+  If ((my>playery*32+32+18) And attack=0 And died=-1) //336
+    d=speed; dir=2; walk=1
+    Do n=0,195
+      Do m=speed,0 Step -0.03125
+        a=playerx; b=playery+m; aa=playerx+1-0.03125; bb=playery+m+1-0.03125
+        xx=n%14; yy=n/14
+        collide=extract(type[n],0,0)
+        If (((xx+yy*14=a+(bb)*14 Or xx+yy*14=(aa)+(bb)*14) And collide="1") Or playery+1>14) d=m-0.03125
+      Loop
+    Loop
+    If (d>0) playery=playery+d
+  Endif
+
+  If ((mx>playerx*32+32+18) And attack=0 And died=-1) //333
+    d=speed; dir=3; walk=1
+    Do n=0,195
+      Do m=speed,0 Step -0.03125
+        a=playerx+m; b=playery; aa=playerx+m+1-0.03125; bb=playery+1-0.03125
+        xx=n%14; yy=n/14
+        collide=extract(type[n],0,0)
+        If (((xx+yy*14=(aa)+b*14 Or xx+yy*14=(aa)+(bb)*14) And collide="1") Or playerx+1>14) d=m-0.03125
+      Loop
+    Loop
+    If (d>0) playerx=playerx+d
+  Endif
+
+  /////////////////////////////////////////////////////////////Tiles
+  Do n=0,195
+    xx=n%14;yy=n/14; imx=0; imy=0
+    tilex=extract(type[n],2,2); tiley=extract(type[n],1,1)
+    imx=ttoi(tilex)*32; imy=ttoi(tiley)*32
+
+    bitblt (imb, xx*32+18,yy*32+18, 32,32, imx,imy)
+
+    If ((xx+yy*14=a+b*14 Or xx+yy*14=(aa)+b*14) And type[n]="107" And dir=0) signread=1
+  Loop
+
+  ////////////////////////////////////////////////////////////////////Enemies
+  Do n=0,9
+    deltabx=playerx-ex[n]
+    deltaby=playery-ey[n]
+    deltabc=(deltabx*deltabx + deltaby*deltaby)
+    
+    If (enemy[n]="Shooter" And edead[n]=0)
+      paste sticker(eshooter,ex[n]*32+18+18,ey[n]*32+18+18) 
+      If (epause[n]=0)
+        epause[n]=100
+        bxc[n]=0; byc[n]=0
+        If (iabs(deltabx)>=iabs(deltaby))
+          If (deltabx<=0) edir[n]=1; bxc[n]=-0.1
+          If (deltabx>0) edir[n]=3; bxc[n]=0.1
+        Endif
+        If (iabs(deltabx)<iabs(deltaby))
+          If (deltaby<=0) edir[n]=0; byc[n]=-0.1
+          If (deltaby>0) edir[n]=2; byc[n]=0.1
+        Endif
+        ebx[n]=ex[n]; eby[n]=ey[n] ;eepause[n]=1
+      Endif
+      If (epause[n]>0) epause[n]=epause[n]-1
+      If (eepause[n]=1)
+        paste sticker (bulletpic,ebx[n]*32+18+32,eby[n]*32+18+32)
+        ebx[n]=ebx[n]+bxc[n]
+        eby[n]=eby[n]+byc[n]
+      Endif
+      a=ebx[n]; b=eby[n]; aa=playerx; bb=playery
+      If (a+b*14=aa+bb*14 And hp>0 And eepause[n]=1) eepause[n]=0; hp=hp-1
+      If (ebx[n]>13 Or ebx[n]<-1 Or eby[n]<-1 Or eby[n]>13) eepause[n]=0
+    Endif
+  Loop
+
+  //////////////////////////////////////////////////////////////////Warping
+  a=playerx+0.5; b=playery+0.5
+  If (a+b*14=warp1[lvl]) playerx=warpto1[lvl]%14; playery=warpto1[lvl]/14; cpx=warpto1[lvl]%14;cpy=warpto1[lvl]/14; lvl=warp1lvl[lvl]; Goto changelevel
+  If (a+b*14=warp2[lvl]) playerx=warpto2[lvl]%14; playery=warpto2[lvl]/14; cpx=warpto2[lvl]%14;cpy=warpto2[lvl]/14; lvl=warp2lvl[lvl]; Goto changelevel
+  If (a+b*14=warp3[lvl]) playerx=warpto3[lvl]%14; playery=warpto3[lvl]/14; cpx=warpto3[lvl]%14;cpy=warpto3[lvl]/14; lvl=warp3lvl[lvl]; Goto changelevel
+   
+  /////////////////////////////////////////////////////////////Player/Animations
+  If (died=-1) paste sticker (shadow, playerx*32+18+16, playery*32+18+16)
+
+  If (walk=0 And attack=0 And died=-1)
+    pastestickercell (body,dir+1, playerx*32+18+16, playery*32+18+16)
+    If (dir=0 Or dir=2) pastestickercell (head,dir+1, playerx*32+18+16, playery*32+18+10)
+    If (dir=1 Or dir=3) pastestickercell (head,dir+1, playerx*32+18+16, playery*32+18+8)
+  Endif
+  If (walk=1 And attack=0 And died=-1)
+    hy=0; hx=0
+    If ((dir=0 Or dir=2) And walka=1) hy=-2
+    If ((dir=0 Or dir=2) And walka=3) hy=2
+    If ((dir=0 Or dir=2) And walka=5) hy=-2
+    If (dir=1 And walka=1) hy=2
+    If (dir=1 And walka=3) hy=2
+    If (dir=1 And walka=5) hx=-2
+    If (dir=3 And walka=1) hy=2
+    If (dir=3 And walka=3) hy=2
+    If (dir=3 And walka=5) hx=2
+
+    If (dir=0) pastestickercell (walk0,walka ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16+hx, playery*32+18+9+hy)
+    If (dir=1) pastestickercell (walk1,walka ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16+hx, playery*32+18+6+hy)
+    If (dir=2) pastestickercell (walk2,walka ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16+hx, playery*32+18+9+hy)
+    If (dir=3) pastestickercell (walk3,walka ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16+hx, playery*32+18+6+hy)
+
+    If (wtime<=0 And died=-1) 
+      If (wd=0) walka=walka-1
+      If (wd=1) walka=walka+1
+      If (walka<=1) wd=1
+      If (walka>=5) wd=0
+      wtime=4
+    Endif
+    wtime=wtime-1
+  Endif
+
+  If (attack>=1 And died=-1) 
+    attack=attack-1
+    If (attack=0 And gun=2) gun=1
+    If (dir=0) pastestickercell (attackani,dir+1 ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16, playery*32+18+10-4)
+    If (dir=1) pastestickercell (attackani,dir+1 ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16-4, playery*32+18+8)
+    If (dir=2) pastestickercell (attackani,dir+1 ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16, playery*32+18+10+4)
+    If (dir=3) pastestickercell (attackani,dir+1 ,playerx*32+18+16, playery*32+18+16); pastestickercell (head,dir+1, playerx*32+18+16+4, playery*32+18+8)
+    If (gun=2)
+      If (dir=0) pastestickercell (gunpic,dir+1 ,playerx*32+18+3, playery*32+18+5)
+      If (dir=1) pastestickercell (gunpic,dir+1 ,playerx*32+18-1, playery*32+18+14)
+      If (dir=2) pastestickercell (gunpic,dir+1 ,playerx*32+18+25, playery*32+18+18)
+      If (dir=3) pastestickercell (gunpic,dir+1 ,playerx*32+18+35, playery*32+18+14)
+    Endif
+  Endif
+
+  If (died>-1)
+    pastesticker (fdead,playerx*32+18+32,playery*32+18+18)
+  Endif
+  
+
+  /////////////////////////////////////////////////////Attacking
+  If (key=115) 
+    attack=15; grabbing=0
+    If (dir=2) d1=0; d2=1 //down
+    If (dir=0) d1=0; d2=-1 //up
+    If (dir=1) d1=-1; d2=0 //left
+    If (dir=3) d1=1; d2=0 //right
+
+      //////////////Enemy Punch
+      a=playerx+0.5; b=playery+0.5
+      Do mmm=0,9
+        If ((a+d1)+(b+d2)*14=ex[mmm]+ey[mmm]*14)
+          edead[mmm]=1
+        Endif
+      Loop
+
+    Do n=0,195
+      a=playerx+0.5; b=playery+0.5
+      xx=n%14; yy=n/14
+      /////////////Bush Breaking
+      If (xx+yy*14=(a+d1)+(b+d2)*14 And type[n]="102") 
+        Do nn=0,3
+          bushbladex[nn]=random(3); bushbladey[nn]=random(3); bushbladecx[nn]=(random(10)-5); bushbladecy[nn]=(random(10)-5)
+          bushbladecx[nn]=bushbladecx[nn]/2; bushbladecy[nn]=bushbladecy[nn]/2
+        Loop
+        type[n]="003"; bushb=1;bushbx=xx+0.5;bushby=yy+0.5;bushbtime=25; Break
+      Endif
+    Loop
+  Endif
+  /////////////////////////////////////////////////////Attacking Gun
+  If (key=100 And gun=1)
+    gun=2; attack=15
+    shootbullet=1
+  Endif
+  If (shootbullet=1)
+    shootbullet=0
+    Do n=0,49
+      If (ba[n]=0) 
+        ba[n]=1
+        If (dir=0) bx[n]=playerx+0.1; by[n]=playery; bcx[n]=0; bcy[n]=-0.1
+        If (dir=1) bx[n]=playerx-0.4; by[n]=playery+0.3; bcx[n]=-0.1; bcy[n]=0
+        If (dir=2) bx[n]=playerx+0.8; by[n]=playery+0.4; bcx[n]=0; bcy[n]=0.1
+        If (dir=3) bx[n]=playerx+1; by[n]=playery+0.4; bcx[n]=0.1; bcy[n]=0
+        Break
+      Endif
+    Loop
+  Endif
+  Do n=0,49
+    If (ba[n]=1) 
+      bx[n]=bx[n]+bcx[n]; by[n]=by[n]+bcy[n]
+      If (bx[n]>14 Or bx[n]<0 Or by[n]>14 Or by[n]<0) bx[n]=-2; by[n]=-2; ba[n]=0
+      paste sticker (bulletpic,bx[n]*32+18,by[n]*32+18)
+
+      a=bx[n]; b=by[n]
+      Do mm=0,195
+        collide=extract(type[mm],0,0)
+        If (a+b*14=mm And collide="1") bx[n]=-2; by[n]=-2; ba[n]=0
+        ////////Bush Shot
+        If (a+b*14=mm And type[mm]="102") 
+          Do nn=0,3
+            bushbladex[nn]=random(3); bushbladey[nn]=random(3); bushbladecx[nn]=(random(10)-5); bushbladecy[nn]=(random(10)-5)
+            bushbladecx[nn]=bushbladecx[nn]/2; bushbladecy[nn]=bushbladecy[nn]/2
+          Loop
+          type[mm]="003"; bushb=1;bushbx=a+0.5;bushby=b+0.5;bushbtime=25; Break
+        Endif
+        //////Hit Enemy
+        Do mmm=0,9
+          If (a+b*14=ex[mmm]+ey[mmm]*14)
+            edead[mmm]=1; bx[n]=-2; by[n]=-2; ba[n]=0
+          Endif
+        Loop
+      Loop
+    Endif
+  Loop
+  
+  /////////////////////////////////////////////////////Grabbing
+  If (key=97)
+    grabbing=1
+  Endif
+  If (key!=97)
+    grabbing=0
+  Endif
+
+  //////Bush Broken
+  If (bushb>0)
+    bushbtime=bushbtime-1; bushb=bushb+1
+    If (bushb>10) bushb=1
+    Do n=0,3
+      bushbladex[n]=bushbladex[n]+bushbladecx[n]; bushbladey[n]=bushbladey[n]+bushbladecy[n]
+      If (bushb<=5) paste sticker(bushblade1,bushbx*32+18+bushbladex[n],bushby*32+18+bushbladey[n])
+      If (bushb>5)  paste sticker(bushblade2,bushbx*32+18+bushbladex[n],bushby*32+18+bushbladey[n])
+    Loop
+    If (bushbtime<=0)  
+      bushbtime=25; bushb=0
+    Endif
+  Endif
+
+ 
+  ///////////////////////////////////////////////Chest Item Show
+  If (showchestitem>0 And showchestitem<100) 
+    If (showchestitemin="money") paste sticker (moneyitem, showchestitemx*32+34, showchestitemy*32+34-(showchestitem/4))
+    If (showchestitemin="gun") pastestickercell (gunpic,2, showchestitemx*32+34, showchestitemy*32+34-(showchestitem/4))
+    If (showchestitemin="heartcontainer") paste sticker (heart, showchestitemx*32+34, showchestitemy*32+34-(showchestitem/4))
+    showchestitem=showchestitem+1
+  Endif
+
+  /////////////////////////////////////////////Add Hp
+  If (hpadd>0) hpadd=hpadd-1
+  If (key=101 And money>=5 And hpadd<=0 And hp<totalhp And died=-1)
+    money=money-5
+    hpadd=20
+    hp=hp+1
+  Endif
+
+  ///////////////////////////////////////////////////////Tree Tops
+  Do n=0,195
+    xx=n%14; yy=n/14
+    If (type[n]="156") paste sticker (treetop, xx*32+32+18, yy*32+10)
+  Loop
+
+  ///////////////////////////////////////////Right Hud
+  If (hp>0)
+    Do n=0,hp-1
+      paste sticker (heart,489+(133/totalhp)*n,30)
+    Loop
+  Endif
+  If (hp<=0 And died=-1)
+    died=250
+  Endif
+  paste sticker (moneypic, 600, 100)
+  Outtextxy(612,100,itot(money))
+  If (gun=1 Or gun=2) 
+    pastestickercell (gunpic,2, 560,110)
+  Endif
+
+  ////////////////Died Reset
+  If (died>0) died=died-1
+  If (died=0) 
+    playerx=cpx; playery=cpy
+    died=-1
+    hp=totalhp
+    Goto changelevel
+  Endif
+
+  //////////////////////////////////////////Sign Read
+  If (signread=1)
+    signread=0
+    Outtextxy(playerx*32+18-length(sign[lvl])*3,playery*32+18-32,sign[lvl])
+  Endif
+
+  ////////Misc
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(10)
+  If (key=27) Break
+Loop
+
+close blt (imi)
+close image (imb)
+close sticker (shadow)
+close sticker (moneypic)
+close sticker (moneyitem)
+close sticker (bushblade1)
+close sticker (bushblade2)
+close sticker (bulletpic)
+close sticker (heart)
+close sticker (eshooter)
+close sticker (fdead)
+close sticker strip (body)
+close sticker strip (head)
+close sticker strip (walk0)
+close sticker strip (walk1)
+close sticker strip (walk2)
+close sticker strip (walk3)
+close sticker strip (attackani)
+close sticker strip (gunpic)
+quit
+

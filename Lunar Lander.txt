@@ -1,0 +1,196 @@
+Win(null)
+randomize
+Float yy[400]
+Float xx[400]
+win:
+y=ypixels()/2
+yy[0]=y
+dy=0.0
+ddy=0.0
+m=0.0
+landingarea1=random((xpixels()/2)+100)/5
+landingarea2=random((xpixels()/2))/5+((xpixels()/2-100)/5)
+If (landingarea2<landingarea1+30) landingarea2=landingarea2+50
+engineon=1
+offground=1
+thrust=0.0
+dir=0.0
+speedx=0.0
+speedy=0.0
+thrustx=0.0
+thrusty=0.0
+fuel=100.0
+rx=0.0
+ry=0.0
+se=1
+dpara=random(2.0)+2.0
+mx=0
+my=0
+mz=0
+mapid=random(2)
+
+Do n=1,399
+  If (mapid=1)
+    If (n>xpixels()*0.2/5 And n<xpixels()*.5/5) ddy=random(25)-15
+    Else ddy=random(25)-10
+  Endif
+  Else ddy=random(25)-12
+  dy=dy+ddy
+  If (dy<-10) dy=-10
+  If (dy>10) dy=10
+  y=y+dy
+  If (y>ypixels()-100) y=ypixels()-100
+  If (y<100) y=100
+  yy[n]=y
+  xx[n]=n*5
+Loop
+rx=landingarea1*5+20
+ry=yy[landingarea1-1]-10
+Float px[20]
+Float py[20]
+Float dpx[20]
+Float dpy[20]
+
+start:
+Do
+  select screen(1)
+  cls
+  m=0
+  Display "You must safetly land on the green pad to the right"
+  Display "Press Space to ignite your engine"
+  Display "Press Space again to turn your engine off"
+  Display "Use the mouse buttons to rotate the rocket"
+  readmouse(mx,my,mz) 
+  If (se=1)                 
+    rocketline1x=10*sin(dir+3.14)
+    rocketline1y=10*cos(dir+3.14)
+    rocketline2x=10*sin(dir+3.14/2+3.14/4+3.14)
+    rocketline2y=10*cos(dir+3.14/2+3.14/4+3.14)
+    rocketline3x=10*sin(dir-3.14/2-3.14/4+3.14)
+    rocketline3y=10*cos(dir-3.14/2-3.14/4+3.14)
+  Endif
+  line(rocketline1x+rx,rocketline1y+ry,rocketline2x+rx,rocketline2y+ry)
+  line(rocketline1x+rx,rocketline1y+ry,rocketline3x+rx,rocketline3y+ry)
+  line(rocketline2x+rx,rocketline2y+ry,rocketline3x+rx,rocketline3y+ry)
+  If (se=2)
+    Do n=0,19
+      px[n]=rx
+      py[n]=ry
+      dpx[n]=random(20.0)-10.0; dpx[n]=dpx[n]/10
+      dpy[n]=random(20.0); dpy[n]=dpy[n]/10
+    Loop 
+    Do nn=1,60
+      select screen(1)
+      cls
+      m=0
+      solidcolor(White)
+      Display "You have crashed"
+      key=readkey()
+      Do n=0,19
+        solidcircle(px[n],py[n],1)
+        px[n]=px[n]+dpx[n]
+        py[n]=py[n]-dpy[n]
+        dpy[n]=dpy[n]-0.05
+      Loop
+      If (key=27) quit  
+      Do n=1,399
+        If (n=landingarea1 Or n=landingarea2) m=m+50; linecolor(Green); line(xx[n-1]+m-50,yy[n-1],xx[n-1]+m,yy[n-1]); linecolor(White)
+        line(xx[n-1]+m,yy[n-1],xx[n]+m,yy[n])
+      Loop
+      selectscreen(0)
+      bitbltscreen(1)
+      Delay(25)
+    Loop
+    se=1
+    dir=0.0
+    speedx=0.0
+    speedy=0.0
+    thrustx=0.0
+    thrusty=0.0
+    engineon=1
+    offground=1
+    fuel=100
+    rx=landingarea1*5+20
+    ry=yy[landingarea1-1]-10
+    Goto start
+  Endif
+  key=readkey()
+  If (key=Space) engineon=3-engineon; offground=2
+ If (offground=2)
+  If (mz=1 And dir<3.14/2) dir=dir+0.05
+  If (mz=2 And dir>-3.14/2) dir=dir-0.05
+  lx=(random(6)+17)*sin(dir)  //20
+  ly=(random(6)+17)*cos(dir)
+  lxx=12*sin(dir+3.14/8)
+  lyy=12*cos(dir+3.14/8)
+  fuel=fuel*10
+  If (engineon=2 And fuel>=1) 
+    //line(rx+lx*0.5,ry+ly*0.5,rx+lx,ry+ly)
+    solidcolor(Orange)
+    //solidtriangle(rx+lx,ry+ly,   rx+lx*0.42,ry+ly*0.42,  8*sin(dir+3.14/8)+rx,8*cos(dir+3.14/8)+ry)
+      solidtriangle(rx+lx,ry+ly,   8*sin(dir-3.14/8)+rx,8*cos(dir-3.14/8)+ry,  8*sin(dir+3.14/8)+rx,8*cos(dir+3.14/8)+ry)
+    thrustx=dir*2
+    thrusty=1.6*2-iabs(thrustx)
+    speedx=speedx+thrustx/175
+    speedy=speedy+thrusty/175
+    fuel=fuel-1
+  Endif
+  fuel=fuel/10
+  speedx=speedx*1000
+  If (speedx<0) speedx=speedx+2.5
+  If (speedx>0) speedx=speedx-2.5
+  speedy=speedy-0.01
+  speedx=speedx/1000
+  rx=rx-speedx
+  ry=ry-speedy
+ Endif
+  ry=ry-speedy
+  Display ""
+  Display "Fuel:"
+  If (fuel=0) Display "0.0"
+  Else Display fuel*10
+  If (key=27) quit
+  Do n=1,399
+    If (n=landingarea1 Or n=landingarea2) m=m+50; linecolor(Green); line(xx[n-1]+m-50,yy[n-1],xx[n-1]+m,yy[n-1]); linecolor(White)
+    line(xx[n-1]+m,yy[n-1],xx[n]+m,yy[n])
+    If (rocketline1y+ry>yy[n] And rocketline1x+rx<=xx[n+1]+m And rocketline1x+rx>=xx[n-1]+m) se=2
+    If (rocketline2y+ry>yy[n] And rocketline2x+rx<=xx[n+1]+m And rocketline2x+rx>=xx[n-1]+m) se=2
+    If (rocketline3y+ry>yy[n] And rocketline3x+rx<=xx[n+1]+m And rocketline3x+rx>=xx[n-1]+m) se=2
+   
+    If (rocketline1y+ry>yy[landingarea1-1] And rocketline1x+rx>xx[landingarea1] And rocketline1x+rx<xx[landingarea1]+50) se=2
+    If (rocketline2y+ry>yy[landingarea1-1] And rocketline2x+rx>xx[landingarea1] And rocketline2x+rx<xx[landingarea1]+50) se=2
+    If (rocketline3y+ry>yy[landingarea1-1] And rocketline3x+rx>xx[landingarea1] And rocketline3x+rx<xx[landingarea1]+50) se=2
+
+    If (rocketline1y+ry>yy[landingarea2-1] And rocketline1x+rx>xx[landingarea2]+50 And rocketline1x+rx<xx[landingarea2]+100) 
+      dir=dir*1000; speedy=speedy*1000
+      If (iabs(dir)<=200 And iabs(speedy)<200) dir=dir/1000;speedy=speedy/1000;Goto landed
+      Else dir=dir/1000;speedy=speedy/1000;se=2
+    Endif
+    If (rocketline2y+ry>yy[landingarea2-1] And rocketline2x+rx>xx[landingarea2]+50 And rocketline2x+rx<xx[landingarea2]+100) 
+      dir=dir*1000; speedy=speedy*1000
+      If (iabs(dir)<=200 And iabs(speedy)<200) dir=dir/1000;speedy=speedy/1000; Goto landed
+      Else dir=dir/1000;speedy=speedy/1000;se=2
+    Endif
+    If (rocketline3y+ry>yy[landingarea2-1] And rocketline3x+rx>xx[landingarea2]+50 And rocketline3x+rx<xx[landingarea2]+100) 
+      dir=dir*1000; speedy=speedy*1000
+      If (iabs(dir)<=200 And iabs(speedy)<200) dir=dir/1000;speedy=speedy/1000;Goto landed
+      Else dir=dir/1000;speedy=speedy/1000;se=2
+    Endif
+  Loop
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(25)
+Loop
+
+landed:
+Do n=1,399
+  If (n=landingarea1 Or n=landingarea2) m=m+50; linecolor(Green); line(xx[n-1]+m-50,yy[n-1],xx[n-1]+m,yy[n-1]); linecolor(White)
+  line(xx[n-1]+m,yy[n-1],xx[n]+m,yy[n])
+Loop
+Display "You have successfully landed!"
+Display "Double click any key to play again"
+selectscreen(0)
+bitbltscreen(1)
+waitkey()
+waitkey()
+Goto win

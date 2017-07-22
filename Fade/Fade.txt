@@ -1,0 +1,41 @@
+Win(null)
+
+randomize
+path=project()+"countryside.jpg"
+imi = open image (path)
+imb = open blt (imi)
+hide mouse
+Int mx=0; my=0; mz=0
+
+Do
+  select screen(1)
+  cls
+  key=readkey()
+  readmouse(mx,my,mz)
+
+  ////////////////Images and Fade
+  
+  //bitblt (imb, (xx[n]-playerx)*15+640/2, (yy[n]-playery)*15+482/2, 15,15, imx,imy)
+  bitblt (imb, 0, 0)
+  Do x=0.0,199
+    Do y=0.0,199
+      color=getrgbpixel(mx+x,my+y)
+      r=rvalue(color)*(x/199)
+      g=gvalue(color)*(x/199)
+      b=bvalue(color)*(x/199)
+      putrgbpixel(mx+x,my+y,rgb(r,g,b))
+    Loop
+  Loop
+  
+  ////////////Misc
+  If (key=27) Break
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(15)
+Loop
+
+selectscreen(0)
+bitbltscreen(1)
+close blt (imi)
+close image (imb)
+quit

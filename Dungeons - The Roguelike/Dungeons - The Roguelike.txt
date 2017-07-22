@@ -1,0 +1,1458 @@
+Win(null)
+
+randomize
+path=project()+"tileset.bmp"
+imi = open image (path)
+imb = open blt (imi)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Variables
+Int xx[16641]
+Int yy[16641]
+Int zz[16641]
+Int shadow[16641]
+Int olist[16641]
+Int clist[16641]
+Int g[16641]
+Int h[16641]
+Int f[16641]
+//Int ulist[16641]
+//Int clines[16641]
+//0=unfound 1=found
+Int type[16641]
+//0=Wall  1=Ground 2=grass 3=closeddoor 4=opendoor 5=tree 6=woodenwall 7=woodenfloor 8=glass 9=water 10=snowygrass 11=sand
+Text dropitem[16641]
+Text inv[36]
+Do n=0,35
+  inv[n]=""
+Loop
+i=random(3)
+If (i=0) 
+  inv[0]="Hand-sword"
+Endif
+If (i=1)
+  inv[0]="Hand-axe"
+Endif
+If (i=2)
+  inv[0]="Hand-spear"
+Endif
+//inv[8]="Hand-axe"
+//inv[1]="Helm-steelhelm"
+//inv[2]="Armor-steelarmor"
+//inv[3]="Shoes-ironshoes"
+//inv[4]="Helm-ironhelm"
+//inv[5]="Armor-ironarmor"
+//inv[6]="Shoes-steelshoes"
+inv[1]="Hand-crossbow"
+inv[2]="Hand-IronBolt"
+inv[3]="Hand-IronBolt"
+inv[4]="Hand-IronBolt"
+//inv[12]="Hand-spear"
+
+//inv[32]="Door"
+//inv[30]="Glass"
+//inv[31]="Glass"
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////enemy variables/conditions/stats
+Text enemy[200]
+Text ehead[200]
+Text ehand1[200]
+Text ehand2[200]
+Text efeet[200]
+Text ebody[200]
+Int estance[200]
+Int eheadcondition[200]
+Int ehand1condition[200]
+Int ehand2condition[200]
+Int efeetcondition[200]
+Int ebodycondition[200]
+Int elungcondition[200]
+Int ethroatcondition[200]
+Int ebreathcondition[200]
+Int ebloodloss[200]
+Int ebleeding[200]
+Int ex[200]
+Int ey[200]
+Int edead[200]
+Int edodgechance[200]
+Int eblockchance[200]
+Int efound[200]
+
+Text news[12]
+helmet=""
+body=""
+shoes=""
+hand1=""
+hand2=""
+mitem=""
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////stats,conditions, and skills
+swords=10
+axes=10
+spears=10
+archery=10
+defence=10
+dodgechance=10
+blockchance=10
+
+expswords=0
+expaxes=0
+expspears=0
+exparchery=0
+expdefence=0
+expdodgechance=0
+expblockchance=0
+
+stance=0  //0=standing 1=ontheground 2=onthegroundforever
+headcondition=0 //0=perfect 1=bruised 2=badly hurt 3=mortalwound 4=gone
+hand1condition=0 //0=perfect 1=bruised 2=badly hurt 3=mortalwound 4=gone
+hand2condition=0 //0=perfect 1=bruised 2=badly hurt 3=mortalwound 4=gone
+feetcondition=0 //0=perfect 1=bruised 2=badly hurt 3=mortalwound 4=gone
+bodycondition=0 //0=perfect 1=bruised 2=badly hurt 3=mortalwound 4=gone
+lungcondition=0 //0=perfect 1=bruised 2=badly hurt 3=destroyed
+throatcondition=0 //0=perfect 1=bruised 2=badly hurt 3=gone
+breathcondition=0 //0=breathing fine 1=trouble breathing 2=more trouble breathing 3=suffocated to death
+bloodloss=0 //0=not bleeding 1=bleeding 2=bleeding badly 3=blood to death
+dead=0  //0=alive 1=dead
+
+dragging=0 //0=not dragging  1=dragging
+enemydrag=0
+
+x=0; y=0; z=0;
+playerx=50; playery=50
+rplayerx=0; rplayery=0
+ms=0; mu=0
+res=20
+size=25
+view=12
+rechargesize=0
+movex=0; movey=0
+nextturn=0
+doorchangetime=0
+stage=1
+resetmap: levelsize=random(20)+5
+
+Do n=0,199
+  enemy[n]=""
+  ehead[n]=""
+  ehand1[n]=""
+  ehand2[n]=""
+  efeet[n]=""
+  ebody[n]=""
+  eheadcondition[n]=0
+  ehand1condition[n]=0
+  ehand2condition[n]=0
+  efeetcondition[n]=0
+  ebodycondition[n]=0
+  ethroatcondition[n]=0
+  ebreathcondition[n]=0
+  ebloodloss[n]=0
+  ebleeding[n]=0 
+  edead[n]=0
+  edodgechance[n]=0
+  eblockchance[n]=0
+  efound[n]=0
+Loop
+
+If (feetcondition<50) stance=0
+If (headcondition<50) headcondition=0
+If (bodycondition<129) bodycondition=0
+If (hand1condition<50) hand1condition=0
+If (hand2condition<50) hand2condition=0
+If (throatcondition<50) throatcondition=0
+bloodloss=0
+bleeding=0
+If (feetcondition<50) feetcondition=0
+
+select screen(1)
+cls
+Outtextxy(xpixels()/2,ypixels()/2,"Level")
+Outtextxy(xpixels()/2+17,ypixels()/2+15,itot(stage))
+selectscreen(0)
+bitbltscreen(1)
+waitkey()
+ 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Random Map
+Do n=0,16640
+  dropitem[n]=""
+  type[n]=0
+  shadow[n]=0
+  xx[n]=(n%129)
+  yy[n]=((n)/129)
+  zz[n]=-1
+  olist[n]=0
+  clist[n]=0
+  g[n]=0; h[n]=0 ; f[n]=0
+Loop
+
+
+rmx=random(85)+20; rmy=random(85)+20
+playerx=rmx; playery=rmy
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Dungeon Generation
+
+Do n=0,levelsize
+  rsizex=random(7)+2; rsizey=random(7)+2
+  rmx=rmx-rsizex/2; rmy=rmy-rsizey/2
+  Do nx=0,rsizex
+    If (xx[(rmx+rmy*129)]+nx<126 And xx[(rmx+rmy*129)]+nx>3)
+      type[(rmx+rmy*129)+nx]=1
+      Do ny=0,rsizey
+        If (yy[(rmx+rmy*129)]+ny<126 And yy[(rmx+rmy*129)]+ny>3)
+          type[(rmx+rmy*129)+nx+ny*129]=1
+        Endif
+      Loop
+    Endif
+  Loop
+  If (n>=levelsize) Break
+
+  again:freespace=0
+  Do nn=0,16640
+    If (type[nn]=1) freespace=freespace+1 
+  Loop 
+  startpath=random(freespace)
+  freespace=0
+  Do nn=0,16640
+    If (type[nn]=1) freespace=freespace+1
+    If (freespace=startpath)
+      length=random(25)+10
+      dir=random(3)
+      If (dir=0) dir=129
+      If (dir=1) dir=1
+      If (dir=2) dir=-129
+      If (dir=3) dir=-1
+      If (dir=129 Or dir=-129)
+        If ((yy[nn]+length>=126 Or yy[nn]-length<=3)) Goto again
+      Endif
+      If (dir=1 Or dir=-1)
+        If ((xx[nn]+length>=126 Or xx[nn]-length<=3)) Goto again
+      Endif
+      Do mm=0,length
+        type[nn+mm*dir]=1
+      Loop
+      rmx=xx[nn+mm*dir]; rmy=yy[nn+mm*dir]
+      Break
+    Endif
+  Loop
+
+Loop
+
+
+makenewdoor=0
+spawn=0
+additem=0
+Do n=0,16640
+  If (yy[n]<=2 Or yy[n]>=126 Or xx[n]<=2 Or xx[n]>=126) type[n]=0; shadow[n]=0
+  If (type[n-1-129]!=1 And type[n+1-129]!=1 And type[n-1+129]!=1 And type[n+1+129]!=1)
+    If (type[n-1]!=1 And type[n+1]!=1 And type[n-129]!=1 And type[n+129]!=1)  type[n]=2
+  Endif
+  //If (type[n]=0 And ((type[n+1]=0 And type[n-1]=0) Or (type[n+129]=0 And type[n-129]=0)))
+  //  If (type[n+1]=2 Or type[n-1]=2 Or type[n-129]=2 Or type[n+129]=2) makenewdoor=makenewdoor+1
+  //Endif
+  If (type[n]=1) spawn=spawn+1
+Loop
+makenewdoor=random(makenewdoor)
+spawn=random(spawn)
+end=random(spawn)
+spawnc=0
+spawnp=0
+ending=0
+endingp=0
+doorplacecheck=0
+Do n=0,16640
+  //If (type[n]=0 And ((type[n+1]=0 And type[n-1]=0) Or (type[n+129]=0 And type[n-129]=0)))
+  //  If ((type[n+1]=2 Or type[n-1]=2 Or type[n-129]=2 Or type[n+129]=2)) 
+  //    doorplacecheck=doorplacecheck+1
+  //    If (doorplacecheck=makenewdoor) type[n]=3; playerx=n%129; playery=n/129
+  //  Endif
+  //Endif
+  If (type[n]=1) spawnc=spawnc+1; ending=ending+1
+  additemc=random(2000)
+  If (type[n]=1 And additemc<=10) 
+    dropitem[n]="Hand-IronBolt"
+  Endif
+  If (type[n]=1 And additemc=11) 
+    dropitem[n]="Helm-steelhelm"
+  Endif
+  If (type[n]=1 And additemc=12) 
+    dropitem[n]="Armor-steelarmor"
+  Endif
+  If (type[n]=1 And additemc=13) 
+    dropitem[n]="Shoes-steelshoes"
+  Endif
+  If (type[n]=1 And additemc=14) 
+    dropitem[n]="Helm-ironhelm"
+  Endif
+  If (type[n]=1 And additemc=15) 
+    dropitem[n]="Shoes-ironshoes"
+  Endif
+  If (type[n]=1 And additemc=16) 
+    dropitem[n]="Armor-ironarmor"
+  Endif
+  If (type[n]=1 And additemc=16) 
+    dropitem[n]="Armor-ironarmor"
+  Endif
+  If (type[n]=1 And additemc=17) 
+    dropitem[n]="HAnd-sword"
+  Endif
+  If (type[n]=1 And additemc=18) 
+    dropitem[n]="Hand-axe"
+  Endif
+  If (type[n]=1 And additemc=19) 
+    dropitem[n]="Hand-spear"
+  Endif
+  
+    //If (k>=9) dropitem[n]="Hand-IronBolt"
+    //If (k=3) dropitem[n]="Helm-steelhelm"
+    //If (k=4) dropitem[n]="Armor-steelarmor"
+    //If (k=5) dropitem[n]="Shoes-steelshoes"
+    //If (k=6) dropitem[n]="Helm-ironhelm"
+    //If (k=7) dropitem[n]="Armor-ironarmor"
+    //If (k=8) dropitem[n]="Shoes-ironshoes"
+
+  If (spawnc=spawn And spawnp=0) playerx=xx[n]; playery=yy[n]; spawnp=1
+  If (ending=end And endingp=0) type[n]=12; endingp=1
+  If (type[n+1]=0 And type[n-1]=0 And type[n+129]=1 And type[n-129]=1)
+    dwallc=0
+    If (type[n+129+1]!=0 And type[n+129-1]!=0 And type[n-129+1]!=0 And type[n-129-1]!=0) dwallc=1
+    If (dwallc=0 And ((type[n+129+1]=1 And type[n+129+1]=1) Or (type[n-129+1]=1 And type[n-129-1]=1))) type[n]=3
+  Endif
+  If (type[n+129]=0 And type[n-129]=0 And type[n+1]=1 And type[n-1]=1)
+    dwallc=0
+    If (type[n+129+1]!=0 And type[n+129-1]!=0 And type[n-129+1]!=0 And type[n-129-1]!=0) dwallc=1
+    If (dwallc=0 And ((type[n+129+1]=1 And type[n-129+1]=1) Or (type[n+129-1]=1 And type[n-129-1]=1))) type[n]=3
+  Endif
+  //trees
+  If (type[n]=2 And type[n-1]!=5 And type[n+1]!=5 And type[n+129]!=5 And type[n-129]!=5)
+    maketree=random(12)
+    If (maketree=0) type[n]=5
+  Endif
+
+//inv[1]="Helm-steelhelm"
+//inv[2]="Armor-steelarmor"
+//inv[3]="Shoes-ironshoes"
+//inv[4]="Helm-ironhelm"
+//inv[5]="Armor-ironarmor"
+//inv[6]="Shoes-steelshoes"
+
+Loop
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Add Enemies with weapons
+enum=0; adde=129
+Do n=0,16640
+  xxx=n%129
+  yyy=n/129
+  If (type[n]=1) adde=random(45)
+  If (adde=0) 
+    ex[enum]=(n%129)
+    ey[enum]=((n)/129)
+    etype=random(3)
+    ehand1[enum]=""
+    ehand2[enum]=""
+
+    If (etype=0) 
+      enemy[enum]="Human"
+      edodgechance[enum]=10; eblockchance[enum]=10
+      weapontype=random(3)
+      If (weapontype=0) 
+        ehand1[enum]="Hand-sword"      
+      Endif
+      If (weapontype=1)
+        ehand1[enum]="Hand-axe"
+      Endif
+      If (weapontype=2)
+        ehand1[enum]="Hand-spear"
+      Endif
+      enum=enum+1
+    Endif
+
+    If (etype=1)
+      enemy[enum]="Supplier"
+      edodgechance[enum]=25; eblockchance[enum]=5
+      ehand1[enum]="Hand-IronBolt"
+      ehand2[enum]="Hand-IronBolt"
+      enum=enum+1
+    Endif
+
+    If (etype=2)
+      enemy[enum]="Troll"
+      edodgechance[enum]=5; eblockchance[enum]=20
+      enum=enum+1
+    Endif
+
+  Endif
+  adde=129
+Loop
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Gameplay
+Do
+  nevermind: select screen(1)  
+  cls
+  key=readkey()
+  readmouse(x,y,z)
+  solidrectangle(xpixels()-300,0,xpixels(),ypixels()); forecolor(White)
+
+  If (expswords>=swords/2) swords=swords+1; expswords=0
+  If (expaxes>=axes/2) axes=axes+1; expaxes=0
+  If (expspears>=spears/2) spears=spears+1; expspears=0
+  If (exparchery>=archery/3) archery=archery+1; exparchery=0
+  If (expdefence>=defence/2) defence=defence+1; expdefence=0
+  If (expdodgechance>=dodgechance/3) dodgechance=dodgechance+1; expdodgechance=0
+  If (expblockchance>=blockchance/3) blockchance=blockchance+1; expblockchance=0
+
+  If (doorchangetime>=1 And nextturn>=1) doorchangetime=doorchangetime-1
+  If (nextturn>=1) nextturn=nextturn-1
+  If (key=46) nextturn=nextturn+1
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Movement
+  If (ms=0 And mu=0 And dead=0)
+    If (rechargesize>=1) rechargesize=rechargesize-1
+    If (key=43) res=res+1
+    If (key=45 And res>4) res=res-1
+    If (key=328 And type[playerx+playery*129-129]!=0 And type[playerx+playery*129-129]!=5 And type[playerx+playery*129-129]!=6 And type[playerx+playery*129-129]!=8)
+      oldposx=playerx; oldposy=playery 
+      If (playery>1) mu=-1
+    Endif
+    If (key=336 And type[playerx+playery*129+129]!=0 And type[playerx+playery*129+129]!=5 And type[playerx+playery*129+129]!=6 And type[playerx+playery*129+129]!=8)
+      oldposx=playerx; oldposy=playery
+      If (playery<127) mu=1
+    Endif
+    If (key=333 And type[playerx+playery*129+1]!=0 And type[playerx+playery*129+1]!=5 And type[playerx+playery*129+1]!=6 And type[playerx+playery*129+1]!=8) 
+      oldposx=playerx; oldposy=playery
+      If (playerx<127) ms=1
+    Endif
+    If (key=331 And type[playerx+playery*129-1]!=0 And type[playerx+playery*129-1]!=5 And type[playerx+playery*129-1]!=6 And type[playerx+playery*129-1]!=8) 
+      oldposx=playerx; oldposy=playery
+      If (playerx>1) ms=-1
+    Endif
+  Endif
+  
+  If (ms!=0)
+    If (ms>0) ms=ms+size/6
+    If (ms<0) ms=ms-size/6
+    If (iabs(ms)>=size)
+      If (ms>0) playerx=playerx+1
+      If (ms<0) playerx=playerx-1
+      ms=0; nextturn=nextturn+1
+      If (stance=1 Or stance=2) nextturn=nextturn+1
+    Endif
+  Endif
+  If (mu!=0)
+    If (mu>0) mu=mu+size/6
+    If (mu<0) mu=mu-size/6
+    If (iabs(mu)>=size)
+      If (mu>0) playery=playery+1
+      If (mu<0) playery=playery-1
+      mu=0; nextturn=nextturn+1
+      If (stance=1 Or stance=2) nextturn=nextturn+1
+    Endif
+  Endif
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Tile Display  
+  retile:
+  Do n=0,16640
+
+   //If (olist[n]=100) type[n]=10
+   //If (olist[n]!=100 And type[n]=10) type[n]=1
+
+   If (type[n]=12 And xx[n]=playerx And yy[n]=playery) stage=stage+1; Goto resetmap
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Doors
+   If (type[n]=4) 
+     If (doorchangetime<=0) type[n]=3
+     If (playerx+playery*129=n) doorchangetime=2
+   Endif
+   If (type[n]=3 And playerx+playery*129=n) 
+     type[n]=4; doorchangetime=2
+     Goto retile
+   Endif
+
+   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////shadows
+   If (playerx!=rplayerx Or playery!=rplayery)
+    If (shadow[n]=1) shadow[n]=2
+    If (shadow[n]!=2) shadow[n]=1
+    rx=playerx-xx[n]
+    ry=playery-yy[n]
+    rc=sqrt(rx*rx+ry*ry)
+    If (rc>view)
+      If (shadow[n]!=2) shadow[n]=0
+    Endif
+    If (rc<=view)
+      rxx=rx; ryy=ry
+      Do d=0.0,view-1
+        ry=ryy; rx=rxx
+        ry=ry*(d/view); rx=rx*(d/view)
+        If (type[playerx-rx+(playery-ry)*129]=0 Or type[playerx-rx+(playery-ry)*129]=3 Or type[playerx-rx+(playery-ry)*129]=5 Or type[playerx-rx+(playery-ry)*129]=6)
+          If (shadow[n]=2) Break
+          shadow[n]=0; Break
+        Endif
+        If (d=view-1) shadow[n]=1
+      Loop
+    Endif
+   Endif
+ 
+  
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Tiles
+    If (shadow[n]!=0)
+      imx=-1; imy=-1
+      //0=Wall  1=stoneGround 2=grass 3=closeddoor 4=opendoor 5=tree 6=woodenwall 7=woodenfloor 8=glass
+      If (type[n]=0) imx=0; imy=0
+      If (type[n]=1) imx=25; imy=0
+      If (type[n]=2) imx=50; imy=0
+      If (type[n]=3) imx=175; imy=0
+      If (type[n]=4) imx=200; imy=0
+      If (type[n]=5) imx=75; imy=0
+      If (type[n]=6) imx=129; imy=0
+      If (type[n]=7) imx=125; imy=0
+      If (type[n]=8) imx=150; imy=0
+      If (type[n]=9) imx=250; imy=0
+      If (type[n]=10) imx=275; imy=0
+      If (type[n]=11) imx=300; imy=0
+      If (type[n]=12) imx=325; imy=0
+      If (shadow[n]=2) 
+        If (type[n]=0) imx=0; imy=25
+        If (type[n]=1) imx=25; imy=25
+        If (type[n]=2) imx=50; imy=25
+        If (type[n]=3) imx=175; imy=25
+        If (type[n]=4) imx=200; imy=25
+        If (type[n]=5) imx=75; imy=25
+        If (type[n]=6) imx=129; imy=25
+        If (type[n]=7) imx=125; imy=25
+        If (type[n]=8) imx=150; imy=25
+        If (type[n]=9) imx=250; imy=25
+        If (type[n]=10) imx=275; imy=25
+        If (type[n]=11) imx=300; imy=25
+        If (type[n]=12) imx=325; imy=25
+      Endif
+    Endif
+    Else imx=-1; imy=-1
+    If (xx[n]>playerx-xpixels()/size And xx[n]<playerx+xpixels()/size And yy[n]>playery-ypixels()/size And yy[n]<playery+ypixels()/size) 
+      If ((xx[n]<playerx+res And xx[n]>playerx-res And yy[n]<playery+res And yy[n]>playery-res) Or res=0)
+        wx1=(xx[n]-playerx)*size+xpixels()/2-ms; wy1=(yy[n]-playery)*size+ypixels()/2-mu
+        wx2=(xx[n]-playerx)*size+size+xpixels()/2-ms; wy2=(yy[n]-playery)*size+size+ypixels()/2-mu
+        If (imx!=-1 And imy!=-1) bitblt (imb, wx1,wy1, 25,25, imx,imy)
+      Endif
+    Endif
+  Loop
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Dropped Items 
+  Do n=0,16640
+    If (shadow[n]=1)
+      If (dropitem[n]!="") Call invitem((xx[n]-playerx)*size+xpixels()/2-ms,(yy[n]-playery)*size+ypixels()/2-mu,dropitem[n],0,25)@  
+      If (dropitem[n]!="") Call invitem((xx[n]-playerx)*size+xpixels()/2-ms,(yy[n]-playery)*size+ypixels()/2-mu,dropitem[n],1,25)@  
+    Endif
+  Loop
+
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Building
+  If (z=2 And dead=0)
+    placeable=0; wp=""
+    If (x<xpixels()/2+size*2 And x>xpixels()/2+size And y<ypixels()/2+size And y>ypixels()/2) tileplace=playerx+1+playery*129;placeable=1
+    If (x<xpixels()/2 And x>xpixels()/2-size And y<ypixels()/2+size And y>ypixels()/2) tileplace=playerx-1+playery*129;placeable=1 
+    If (x<xpixels()/2+size And x>xpixels()/2 And y<ypixels()/2 And y>ypixels()/2-size) tileplace=playerx-129+playery*129;placeable=1    
+    If (x<xpixels()/2+size And x>xpixels()/2 And y<ypixels()/2+size*2 And y>ypixels()/2+size) tileplace=playerx+129+playery*129;placeable=1  
+    If (placeable=1 And (type[tileplace]=2 Or type[tileplace]=10))
+      If (mitem="Wooden Wall") wp=mitem; type[tileplace]=6;mitem=""; placeable=2
+      If (mitem="Wooden Floor") wp=mitem; type[tileplace]=7;mitem=""; placeable=2
+      If (mitem="Glass") wp=mitem; type[tileplace]=8;mitem=""; placeable=2
+      If (mitem="Door") wp=mitem; type[tileplace]=3;mitem=""; placeable=2
+    Endif
+    If (placeable=2)
+      Do n=0,35
+        If (inv[n]=wp) mitem=inv[n]; inv[n]=""; Break
+      Loop
+    Endif 
+    If (placeable=1 And type[tileplace]=5)
+      If (mitem="Hand-axe") type[tileplace]=2; dropitem[tileplace]="Wooden Wall"
+    Endif
+    If (placeable=1 And type[tileplace]=6)
+      If (mitem="Hand-axe") type[tileplace]=2; dropitem[tileplace]="Wooden Floor"
+    Endif
+  Endif
+
+  //0=Wall  1=Ground 2=grass 3=closeddoor 4=opendoor 5=tree 6=woodenwall 7=woodenfloor 8=glass
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Character
+  bitblt (imb, xpixels()/2,ypixels()/2, 25,25, 0,300)
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Stand Up/Down
+  If (key=115 And feetcondition<35) stance=1-stance 
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Tree Leaves
+  Do n=0,16640
+    If (type[n]=5 And xx[n]<playerx+res And xx[n]>playerx-res And yy[n]<playery+1+res And yy[n]>playery-res) 
+      If (shadow[n]=1)
+        wx1=(xx[n]-playerx)*size+xpixels()/2-ms; wy1=(yy[n]-playery)*size+ypixels()/2-mu-25
+        bitblt (imb, wx1,wy1, 25,25, 225,00)
+      Endif
+      If (shadow[n]=2)
+        wx1=(xx[n]-playerx)*size+xpixels()/2-ms; wy1=(yy[n]-playery)*size+ypixels()/2-mu-25
+        bitblt (imb, wx1,wy1, 25,25, 225,25)
+      Endif
+    Endif  
+  Loop
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////GUI Panels
+  solidcolor(White); solidrectangle(49,49,546,246); solidrectangle(xpixels()-320,0,xpixels(),ypixels())
+  solidcolor(Black); solidrectangle(50,50,545,245); solidrectangle(xpixels()-319,0,xpixels(),ypixels())
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Enemies
+  attenemy=0
+  Do en=0,199
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////display enemy
+    rx=playerx-ex[en]
+    ry=playery-ey[en]
+    rc=sqrt(rx*rx+ry*ry)
+    If (shadow[ex[en]+ey[en]*129]=1 And rc<=view)
+      efound[en]=1
+      If (enemy[en]="Human")
+        wx1=(ex[en]-playerx)*size+xpixels()/2-ms; wy1=(ey[en]-playery)*size+ypixels()/2-mu;
+        wx2=(ex[en]-playerx)*size+size+xpixels()/2-ms; wy2=(ey[en]-playery)*size+size+ypixels()/2-mu
+        bitblt (imb, wx1,wy1, 25,25, 25,300)
+      Endif
+      If (enemy[en]="Troll")
+        wx1=(ex[en]-playerx)*size+xpixels()/2-ms; wy1=(ey[en]-playery)*size+ypixels()/2-mu;
+        wx2=(ex[en]-playerx)*size+size+xpixels()/2-ms; wy2=(ey[en]-playery)*size+size+ypixels()/2-mu
+        bitblt (imb, wx1,wy1, 25,25, 50,300)
+      Endif
+      If (enemy[en]="Supplier")
+        wx1=(ex[en]-playerx)*size+xpixels()/2-ms; wy1=(ey[en]-playery)*size+ypixels()/2-mu;
+        wx2=(ex[en]-playerx)*size+size+xpixels()/2-ms; wy2=(ey[en]-playery)*size+size+ypixels()/2-mu
+        bitblt (imb, wx1,wy1, 25,25, 75,300)
+      Endif
+
+    Endif
+    
+    If (nextturn>=1)
+
+      If (type[ex[en]+ey[en]*129]=3) type[ex[en]+ey[en]*129]=4; doorchangetime=2
+
+      attano=0
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Enemy Movement
+      If (efound[en]=1 And ex[en]+ey[en]*129!=playerx+playery*129 And edead[en]=0 And efeetcondition[en]<20)
+      If (ex[en]+ey[en]*129!=playerx+playery*129+1 And ex[en]+ey[en]*129!=playerx+playery*129-1)
+      If (ex[en]+ey[en]*129!=playerx+playery*129+129 And ex[en]+ey[en]*129!=playerx+playery*129-129)
+mx=ex[en]; my=ey[en]
+mz=mx+my*129
+h[mz]=iabs(yy[mz]-playery)+iabs(xx[mz]-playerx)
+mo=0
+toc=0
+Do n=0,16640
+  olist[n]=0
+  clist[n]=0
+  h[n]=iabs(yy[n]-playery)+iabs(xx[n]-playerx)    
+Loop
+
+Do mmm=0,view*2
+     
+      d1=0;d2=0;d3=0;d4=0
+      Do n=0,199
+        If (ex[n]+ey[n]*129-1=ex[en]+ey[en]*129) d1=1
+        If (ex[n]+ey[n]*129+1=ex[en]+ey[en]*129) d2=1
+        If (ex[n]+ey[n]*129-129=ex[en]+ey[en]*129) d3=1
+        If (ex[n]+ey[n]*129+129=ex[en]+ey[en]*129) d4=1
+      Loop
+      If ((type[mz]=1 Or type[mz]=4) And clist[mz+1]=0 And xx[mz]+1<128 And d1=0) olist[mz+1]=1; g[mz+1]=g[mz]+1
+      If ((type[mz]=1 Or type[mz]=4) And clist[mz+129]=0 And yy[mz]+1<128 And d3=0) olist[mz+129]=1; g[mz+129]=g[mz]+1
+      If ((type[mz]=1 Or type[mz]=4) And clist[mz-1]=0 And xx[mz]-1>=1 And d2=0) olist[mz-1]=1; g[mz-1]=g[mz]+1
+      If ((type[mz]=1 Or type[mz]=4) And clist[mz-129]=0 And yy[mz]-1>=1 And d4=0) olist[mz-129]=1; g[mz-129]=g[mz]+1
+
+      clist[mz]=1;olist[mz]=0
+
+      pickf=16640
+      Do n=0,16640
+        f[n]=h[n]+g[n]
+        If (playerx+playery*129<xx[en]+yy[en]*129)
+          If (f[n]<pickf And olist[n]=1 And clist[n]=0) pickf=f[n]; mz=n
+        Endif
+        If (playerx+playery*129>=xx[en]+yy[en]*129)
+          If (f[n]<=pickf And olist[n]=1 And clist[n]=0) pickf=f[n]; mz=n
+        Endif
+      Loop
+
+      If (mz=playerx+playery*129)
+        Do
+          Do m=0,16640
+            If (g[m]=g[mz]-1 And clist[m]=1)
+              If (xx[m]-1=xx[mz] And yy[m]=yy[mz]) olist[m]=100 //type[m]=3
+              If (xx[m]+1=xx[mz] And yy[m]=yy[mz]) olist[m]=100 //type[m]=3
+              If (yy[m]-1=yy[mz] And xx[m]=xx[mz]) olist[m]=100 //type[m]=3
+              If (yy[m]+1=yy[mz] And xx[m]=xx[mz]) olist[m]=100 //type[m]=3
+              If (olist[m]=100) mz=m; Break
+            Endif
+          Loop
+          If (mz=ex[en]+ey[en]*129)
+            If (olist[ex[en]+ey[en]*129+1]=100 And (type[mz+1]=1 Or type[mz+1]=4)) ex[en]=ex[en]+1;attano=1;Goto doneai
+            If (olist[ex[en]+ey[en]*129-1]=100 And (type[mz-1]=1 Or type[mz-1]=4)) ex[en]=ex[en]-1;attano=1;Goto doneai
+            If (olist[ex[en]+ey[en]*129+129]=100 And (type[mz+129]=1 Or type[mz+129]=4)) ey[en]=ey[en]+1;attano=1;Goto doneai
+            If (olist[ex[en]+ey[en]*129-129]=100 And (type[mz-129]=1 Or type[mz-129]=4)) ey[en]=ey[en]-1;attano=1;Goto doneai
+            ex[en]=ex[en]-1; Goto doneai
+          Endif
+        Loop
+      Endif
+  If (mmm>=view*2) Break
+Loop
+Endif
+Endif
+Endif
+doneai:
+
+
+
+     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Enemy Blood loss/suffication     
+     If (ebleeding[en]>=1)
+       ebleeding[en]=ebleeding[en]-2;ebloodloss[en]=ebloodloss[en]+6; 
+       If (dropitem[ex[en]+ey[en]*129]="")
+        dropitem[ex[en]+ey[en]*129]="Human-blood"
+       Endif
+     Endif
+     If (edead[en]=0)
+      If (ebloodloss[en]>=1) ebloodloss[en]=ebloodloss[en]-1
+      If (elungcondition[en]+ethroatcondition[en]>=50) ebreathcondition[en]=ebreathcondition[en]+1
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Attacking You
+      If ((playerx=ex[en]-1 And playery=ey[en]) Or (playerx=ex[en]+1 And playery=ey[en]) Or (playery=ey[en]-1 And playerx=ex[en]) Or (playery=ey[en]+1 And playerx=ex[en])) 
+       If ((efeetcondition[en]<20 Or ehand1condition[en]<20 Or ehand2condition[en]<20) And attano!=1)
+        playerdodgecheck=random(129)
+        If (playerdodgecheck<=129-dodgechance)
+          playerblockcheck=random(129)
+          If (playerblockcheck<=129-blockchance)
+            eattbody=random(6)
+            If (eattbody=0) bodypart="Feet"
+            If (eattbody=1) bodypart="Right Hand"
+            If (eattbody=2) bodypart="Left Hand"
+            If (eattbody=3) bodypart="Body"
+            If (eattbody=4) bodypart="Head" 
+            If (eattbody=5) bodypart="Throat"
+            weaponchoose=random(2)
+            If (weaponchoose=0) weapon=ehand1[en]
+            If (weaponchoose=1) weapon=ehand2[en] 
+            If ((weaponchoose=1 Or weaponchoose=2) And ehand1condition[en]>=20 And ehand2condition[en]>=20 And efeetcondition[en]<20) weapon="Kick" 
+            If (weapon="") weapon="Fist"
+            If (ehand1[en]!="" And ehand2[en]="") weapon=ehand1[en]
+            If (ehand2[en]!="" And ehand1[en]="") weapon=ehand2[en]
+
+            If (weapon="Fist") hitdam=random(4)+2+stage*2
+            If (weapon="Fist" And enemy[en]="Troll") hitdam=random(8)+4+stage*2
+            If (weapon="Kick") hitdam=random(6)+2 +stage*2
+            If (weapon="Kick" And enemy[en]="Troll") hitdam=random(10)+5+stage*2
+            If (weapon="Hand-sword") hitdam=random(8)+5+stage*2
+            If (weapon="Hand-axe") hitdam=random(10)+6+stage*2
+            If (weapon="Hand-spear") hitdam=random(5)+4+stage*2; bleeding=bleeding+hitdam/2+2
+            If (weapon="Hand-IronBolt") hitdam=random(2)+1+stage*2; bleeding=bleeding+hitdam/2+2
+
+   	    If (bodypart="Left Hand") hand2condition=hand2condition+hitdam; expdefence=expdefence+1
+   	    If (bodypart="Right Hand") hand1condition=hand1condition+hitdam; expdefence=expdefence+1
+	
+   	    If (bodypart="Feet" And shoes="Shoes-ironshoes" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+    	    If (bodypart="Feet" And shoes="Shoes-steelshoes" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+    	    If (bodypart="Body" And body="Armor-ironarmor" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+   	    If (bodypart="Body" And body="Armor-steelarmor" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+   	    If (bodypart="Head" And helmet="Helm-ironhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+   	    If (bodypart="Head" And helmet="Helm-steelhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+            If (bodypart="Throat" And helmet="Helm-ironhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+            If (bodypart="Throat" And helmet="Helm-steelhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+
+            If (hitdam<=0) hitdam=1 
+
+            If (bodypart="Feet") feetcondition=feetcondition+hitdam
+            If (bodypart="Body") bodycondition=bodycondition+hitdam
+            If (bodypart="Body" And hitdam>5) lungcondition=lungcondition+hitdam-5
+            If (bodypart="Body" And weapon="Hand-spear") lungcondition=lungcondition+hitdam
+            If (bodypart="Head") headcondition=headcondition+hitdam
+            If (bodypart="Throat") throatcondition=throatcondition+hitdam
+
+            If (weapon!="Fist" And weapon!="Kick" And hitdam>10) bleeding=bleeding+hitdam
+
+    If (hand1condition>=35 And hand1!="") enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=hand1; hand1=""
+    If (hand2condition>=35 And hand2!="") enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=hand2; hand2=""
+    If (feetcondition>=50 And bodypart="Feet")
+     Do feetloop=0,1
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="") 
+          dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Human-blood"
+        Endif
+        If (type[(playerx+throwx)+(playery+throwy)*129]=0) dropitem[(playerx+hitwallx)+(playery+hitwally)*129]="Severed-foot";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(playerx+throwx)+(playery+throwy)*129]="Severed-foot"; 
+      enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=shoes; shoes=""
+     Loop
+    Endif 
+    If ((hand2condition>=50 And bodypart="Left hand") Or (hand1condition>=50 And bodypart="Right hand"))
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="") 
+          dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Human-blood"
+        Endif
+        If (type[(playerx+throwx)+(playery+throwy)*129]=0) dropitem[(playerx+hitwallx)+(playery+hitwally)*129]="Severed-hand";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(playerx+throwx)+(playery+throwy)*129]="Severed-hand"; 
+    Endif 
+    If (throatcondition>=50 And bodypart="Throat")
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="") 
+          dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Human-blood"
+        Endif
+        If (type[(playerx+throwx)+(playery+throwy)*129]=0) dropitem[(playerx+hitwallx)+(playery+hitwally)*129]="Severed-head";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(playerx+throwx)+(playery+throwy)*129]="Severed-head"; 
+      enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=helmet; helmet=""
+    Endif
+        
+            enx=random(3)-1;eny=random(3)-1
+            If (dropitem[(playerx+enx)+(playery+eny)*129]="") 
+              dropitem[(playerx+enx)+(playery+eny)*129]="Human-blood"
+            Endif
+            addnews="The "+enemy[en]+" hit your "+bodypart+" with it's "+weapon+"!"
+            Do ne=11,1
+              news[ne]=news[ne-1]
+            Loop
+            news[0]=addnews 
+          Endif
+          If (playerblockcheck>129-blockchance)
+            addnews="You blocked the "+enemy[en]+"'s attack!"; expblockchance=expblockchance+1
+            Do ne=11,1
+              news[ne]=news[ne-1]
+            Loop
+            news[0]=addnews 
+          Endif
+        Endif
+        If (playerdodgecheck>129-dodgechance)
+          addnews="You dodged the "+enemy[en]+"'s attack!"; expdodgechance=expdodgechance+1
+          Do ne=11,1
+            news[ne]=news[ne-1]
+          Loop
+          news[0]=addnews 
+        Endif
+       Endif
+      Endif
+  
+     Endif
+    Endif 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Enemy Stat Gui
+    t=0
+    If (x<(ex[en]-playerx)*size+size+xpixels()/2-1 And x>(ex[en]-playerx)*size+xpixels()/2 And shadow[ex[en]+ey[en]*129]=1)
+      If (y<(ey[en]-playery)*size+size+ypixels()/2-1 And y>(ey[en]-playery)*size+ypixels()/2)
+        solidcolor(White); line(xpixels()-320,ypixels()/2-5,xpixels(),ypixels()/2-5)
+        forecolor(White); outtextxy(xpixels()-290,ypixels()/2+15*t,enemy[en]); t=t+2
+        If (estance[en]=0) outtextxy(xpixels()-290,ypixels()/2+15*t,"Standing"); t=t+1
+        If (estance[en]=1) outtextxy(xpixels()-290,ypixels()/2+15*t,"On the Ground"); t=t+1
+        If (estance[en]=2) forecolor(Darkred); outtextxy(xpixels()-290,ypixels()/2+15*t,"Lost ability to stand"); t=t+1;forecolor(White)
+        t=t+1
+        holding="Right Hand: "+ehand1[en]; outtextxy(xpixels()-290,ypixels()/2+15*t, holding); t=t+1
+        holding="Left Hand:  "+ehand2[en]; outtextxy(xpixels()-290,ypixels()/2+15*t, holding); t=t+1
+        t=t+1
+        If (ebleeding[en]>=1 And ebleeding[en]<10) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Bleeding"); t=t+1;forecolor(White)
+        If (ebleeding[en]>=10 And ebleeding[en]<20) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Bleeding badly"); t=t+1;forecolor(White)
+        If (ebleeding[en]>=20) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Bleeding horribly"); t=t+1;forecolor(White)
+        If (ebloodloss[en]>=1 And ebloodloss[en]<129) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Lost blood"); t=t+1;forecolor(White)
+        If (ebloodloss[en]>=129 And ebloodloss[en]<200) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Lost a lot of blood"); t=t+1;forecolor(White)
+        If (ebloodloss[en]>=200) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Bled out"); t=t+1;forecolor(White); edead[en]=1
+        If (eheadcondition[en]>=5 And eheadcondition[en]<20) forecolor(White);outtextxy(xpixels()-290,ypixels()/2+15*t,"Head is bruised"); t=t+1;forecolor(White)
+        If (eheadcondition[en]>=20 And eheadcondition[en]<35) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Head is badly hurt"); t=t+1;forecolor(White)
+        If (eheadcondition[en]>=35 And eheadcondition[en]<50) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Head is mortally injured"); t=t+1;forecolor(White)
+        If (eheadcondition[en]>=50) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Head is smashed apart"); t=t+1;forecolor(White); edead[en]=1
+        If (ehand1condition[en]>=5 And ehand1condition[en]<10) forecolor(White);outtextxy(xpixels()-290,ypixels()/2+15*t,"Right hand is bruised"); t=t+1;forecolor(White)
+        If (ehand1condition[en]>=10 And ehand1condition[en]<20) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Right hand is badly hurt"); t=t+1;forecolor(White)
+        If (ehand1condition[en]>=20 And ehand1condition[en]<30) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Right hand is broken"); t=t+1;forecolor(White)
+        If (ehand1condition[en]>=30) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Right hand is severed"); t=t+1;forecolor(White)
+        If (ehand2condition[en]>=5 And ehand2condition[en]<10) forecolor(White);outtextxy(xpixels()-290,ypixels()/2+15*t,"Left hand is bruised"); t=t+1;forecolor(White)
+        If (ehand2condition[en]>=10 And ehand2condition[en]<20) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Left hand is badly hurt"); t=t+1;forecolor(White)
+        If (ehand2condition[en]>=20 And ehand2condition[en]<30) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Left hand is broken"); t=t+1;forecolor(White)
+        If (ehand2condition[en]>=30) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Left hand is severed"); t=t+1;forecolor(White)
+        If (efeetcondition[en]>=5 And efeetcondition[en]<10) forecolor(White);outtextxy(xpixels()-290,ypixels()/2+15*t,"Feet are bruised"); t=t+1;forecolor(White)
+        If (efeetcondition[en]>=10 And efeetcondition[en]<20) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Feet are badly hurt"); t=t+1;forecolor(White);
+        If (efeetcondition[en]>=20 And efeetcondition[en]<30) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Feet are broken"); t=t+1;forecolor(White); estance[en]=2
+        If (efeetcondition[en]>=30) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Feet are severed"); t=t+1;forecolor(White); estance[en]=2
+        If (ebodycondition[en]>=5 And ebodycondition[en]<20) forecolor(White);outtextxy(xpixels()-290,ypixels()/2+15*t,"Body is bruised"); t=t+1;forecolor(White)
+        If (ebodycondition[en]>=20 And ebodycondition[en]<35) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Body is badly hurt"); t=t+1;forecolor(White)
+        If (ebodycondition[en]>=35 And ebodycondition[en]<129) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Body is mortally injured"); t=t+1;forecolor(White)
+        If (ebodycondition[en]>=129) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Body is mangled"); t=t+1;forecolor(White); edead[en]=1
+        If (elungcondition[en]>=5 And elungcondition[en]<35) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Lungs are bruised"); t=t+1;forecolor(White)
+        If (elungcondition[en]>=35 And elungcondition[en]<50) forecolor(Orange); outtextxy(xpixels()-290,ypixels()/2+15*t,"Lungs are badly hurt"); t=t+1;forecolor(White)
+        If (elungcondition[en]>=50) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Lungs are torn up"); t=t+1;forecolor(White)
+        If (ethroatcondition[en]>=5 And ethroatcondition[en]<35) forecolor(Yellow);outtextxy(xpixels()-290,ypixels()/2+15*t,"Throat is bruised"); t=t+1;forecolor(White)
+        If (ethroatcondition[en]>=35 And ethroatcondition[en]<50) forecolor(Orange);outtextxy(xpixels()-290,ypixels()/2+15*t,"Throat is badly hurt"); t=t+1;forecolor(White)
+        If (ethroatcondition[en]>=50) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Decapitated"); t=t+1;forecolor(White); edead[en]=1
+        If (ebreathcondition[en]>=1 And ebreathcondition[en]<50) forecolor(Darkred);outtextxy(xpixels()-290,ypixels()/2+15*t,"Cannot breath"); t=t+1;forecolor(White)
+        If (ebreathcondition[en]>=50) forecolor(Darkred); outtextxy(xpixels()-290,ypixels()/2+15*t,"Suffocated"); t=t+1;forecolor(White); edead[en]=1
+        t=t+1
+        If (edead[en]=1) forecolor(Darkred); outtextxy(xpixels()-290,ypixels()/2+15*t,"Dead"); forecolor(White)
+      Endif
+    Endif
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////attack enemy
+    If (((z=1 And mrecharge<=0) Or z=4) And dead=0)
+     archeryhit=0
+     If (z=4)
+       If (hand1!="Hand-crossbow" And hand2!="Hand-crossbow") Goto nevermind
+       If (hand1!="Hand-IronBolt" And hand2!="Hand-IronBolt") Goto nevermind
+       archeryhit=1
+     Endif
+     If ( ((x<(ex[en]-playerx)*size+size+xpixels()/2-1 And x>(ex[en]-playerx)*size+xpixels()/2)) And shadow[ex[en]+ey[en]*129]=1)
+     If ( (y<(ey[en]-playery)*size+size+ypixels()/2-1 And y>(ey[en]-playery)*size+ypixels()/2))
+      If (((playerx=ex[en]-1 And playery=ey[en]) Or (playerx=ex[en]+1 And playery=ey[en]) Or (playery=ey[en]-1 And playerx=ex[en]) Or (playery=ey[en]+1 And playerx=ex[en])) Or archeryhit=1)
+        Display "test";
+        at=0; attenemy=1
+        If (ex[en]-1=playerx) at=at+1
+        If (ex[en]+1=playerx) at=at+1
+        If (ey[en]-1=playery) at=at+1
+        If (ey[en]+1=playery) at=at+1
+        If (archeryhit=1) at=1
+        If (at=1)
+          addnews=""
+          Do ///////////////////////attack what body part?
+            select screen(1); key=readkey(); n=0; forecolor(White)
+            solidcolor(Black);solidrectangle(0,0,xpixels()-400,300)
+            If(efeetcondition[en]>=30) forecolor(Darkred)
+            outtextxy(20,20+15*n,"2-Feet");n=n+1; forecolor(White)
+            If(ehand2condition[en]>=30) forecolor(Darkred)
+            outtextxy(20,20+15*n,"4-Left hand");n=n+1; forecolor(White)
+            If(ebodycondition[en]>=129) forecolor(Darkred)
+            outtextxy(20,20+15*n,"5-Body");n=n+1; forecolor(White)
+            If(ehand1condition[en]>=30) forecolor(Darkred)
+            outtextxy(20,20+15*n,"6-Right Hand");n=n+1; forecolor(White)
+            If(eheadcondition[en]>=50 Or ethroatcondition[en]>=50) forecolor(Darkred)
+            outtextxy(20,20+15*n,"8-Head");n=n+1; forecolor(White)
+            If(ethroatcondition[en]>=50) forecolor(Darkred)
+            outtextxy(20,20+15*n,"9-Throat");n=n+1; forecolor(White)
+            outtextxy(20,20+15*n,"0-Back");n=n+1
+            If (key=50 And efeetcondition[en]<30) bodypart="Feet";Break       
+            If (key=52 And ehand2condition[en]<30) bodypart="Left hand";Break
+            If (key=54 And ehand1condition[en]<30) bodypart="Right hand";Break  
+            If (key=53 And ebodycondition[en]<129) bodypart="Body";Break
+            If (key=56 And eheadcondition[en]<50 And ethroatcondition[en]<50) bodypart="Head";Break
+            If (key=57 And ethroatcondition[en]<50) bodypart="Throat";Break
+            If (key=48) Goto nevermind
+            selectscreen(0);bitbltscreen(1);Delay(10)
+          Loop
+          defhand1=hand1; defhand2=hand2
+          If (defhand1="") defhand1="Fist"
+          If (defhand2="") defhand2="Fist"
+          If (archeryhit=0)
+           Do
+            select screen(1); key=readkey(); n=0; forecolor(White)
+            solidcolor(Black);solidrectangle(0,0,xpixels()-400,300)
+            If (hand2condition>=35) forecolor(Darkred)
+            outtsay="4-Attack with "+defhand2+"";outtextxy(20,20+15*n,outtsay);n=n+1;forecolor(White)
+            If (hand1condition>=35) forecolor(Darkred)
+            outtsay="6-Attack with "+defhand1+"";outtextxy(20,20+15*n,outtsay);n=n+1;forecolor(White)
+            If (feetcondition>=35) forecolor(Darkred)
+            outtsay="2-Attack with Kick";outtextxy(20,20+15*n,outtsay);n=n+1;forecolor(White)   
+            outtextxy(20,20+15*n,"0-Back");n=n+1
+            If (key=54 And hand1condition<35) weapon=defhand1;Break
+            If (key=52 And hand2condition<35) weapon=defhand2;Break
+            If (key=50 And feetcondition<35) weapon="Kick";Break
+            If (key=48) Goto nevermind
+            selectscreen(0);bitbltscreen(1);Delay(10)           
+           Loop
+          Endif
+
+          If (weapon="Fist") hitchance=80-edodgechance[en]; hitdam=random(6)+1
+          If (weapon="Kick") hitchance=80-edodgechance[en]; hitdam=random(8)+2
+          If (weapon="Hand-sword") hitchance=50+swords*3-edodgechance[en]; hitdam=random(swords*2)+swords+4; expswords=expswords+1
+          If (weapon="Hand-axe") hitchance=50+axes*3-edodgechance[en]; hitdam=random(axes*2)+axes+4; expaxes=expaxes+1
+          If (weapon="Hand-spear") hitchance=50+spears*3-edodgechance[en]; hitdam=random(spears*2)+spears; expspears=expspears+1
+          If (archeryhit=1) 
+            hitchance=60+archery*3-edodgechance[en]; hitdam=random(archery/2)+archery+4; exparchery=exparchery+1 
+            If (hand1="Hand-crossbow") hand2=""
+            If (hand2="Hand-crossbow") hand1=""
+            weapon="Bolt"
+          Endif
+          checkifhit=random(129)
+          If (checkifhit<=hitchance)
+            If (bodypart="Feet") efeetcondition[en]=efeetcondition[en]+hitdam
+            If (bodypart="Left hand") ehand2condition[en]=ehand2condition[en]+hitdam
+            If (bodypart="Right hand") ehand1condition[en]=ehand1condition[en]+hitdam
+            If (bodypart="Body") ebodycondition[en]=ebodycondition[en]+hitdam
+            If (bodypart="Head") eheadcondition[en]=eheadcondition[en]+hitdam
+            If (bodypart="Throat") ethroatcondition[en]=ethroatcondition[en]+hitdam
+            enx=random(3)-1;eny=random(3)-1
+            If (dropitem[(ex[en]+enx)+(ey[en]+eny)*129]="")
+              dropitem[(ex[en]+enx)+(ey[en]+eny)*129]="Human-blood"
+            Endif
+
+    If (ehand1condition[en]>=20 And ehand1[en]!="") enx=random(3)-1;eny=random(3)-1; dropitem[(ex[en]+enx)+(ey[en]+eny)*129]=ehand2[en] ;ehand2[en]="";
+    If (ehand2condition[en]>=20 And ehand2[en]!="") enx=random(3)-1;eny=random(3)-1; dropitem[(ex[en]+enx)+(ey[en]+eny)*129]=ehand1[en] ;ehand1[en]="";
+    If (efeetcondition[en]>=30 And bodypart="Feet")
+     Do feetloop=0,1
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="") 
+          dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Human-blood"
+        Endif
+        If (type[(ex[en]+throwx)+(ey[en]+throwy)*129]=0) dropitem[(ex[en]+hitwallx)+(ey[en]+hitwally)*129]="Severed-foot";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Severed-foot"; 
+      enx=random(3)-1;eny=random(3)-1; dropitem[(ex[en]+enx)+(ey[en]+eny)*129]=efeet[en]; efeet[en]=""
+     Loop
+    Endif 
+    If ((ehand2condition[en]>=30 And bodypart="Left hand") Or (ehand1condition[en]>=30 And bodypart="Right hand"))
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="") 
+          dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Human-blood"
+        Endif
+        If (type[(ex[en]+throwx)+(ey[en]+throwy)*129]=0) dropitem[(ex[en]+hitwallx)+(ey[en]+hitwally)*129]="Severed-hand";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Severed-hand"; 
+      If (bodypart="Left hand") enx=random(3)-1;eny=random(3)-1; dropitem[(ex[en]+enx)+(ey[en]+eny)*129]=ehand2[en] ;ehand2[en]="";
+      If (bodypart="Right hand") enx=random(3)-1;eny=random(3)-1; dropitem[(ex[en]+enx)+(ey[en]+eny)*129]=ehand1[en] ;ehand1[en]="";
+    Endif 
+    If (ethroatcondition[en]>=50 And bodypart="Throat")
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="") 
+          dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Human-blood"
+        Endif
+        If (type[(ex[en]+throwx)+(ey[en]+throwy)*129]=0) dropitem[(ex[en]+hitwallx)+(ey[en]+hitwally)*129]="Severed-head";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(ex[en]+throwx)+(ey[en]+throwy)*129]="Severed-head"; 
+      enx=random(3)-1;eny=random(3)-1; dropitem[(ex[en]+enx)+(ey[en]+eny)*129]=ehead[en]; ehead[en]=""
+    Endif 
+
+
+            addnews="You hit the "+enemy[en]+" in the "+bodypart+" with your "+weapon+"!"
+            If (archeryhit=1) addnews="You shot the "+enemy[en]+" in the "+bodypart+"!"
+            If ((weapon="Hand-sword" Or "Hand-axe") And hitdam>10) ebleeding[en]=ebleeding[en]+hitdam
+            If (weapon="Hand-spear") ebleeding[en]=ebleeding[en]+hitdam+3
+            If (bodypart="Body" And hitdam>5) elungcondition[en]=elungcondition[en]+hitdam-5
+            If (bodypart="Body" And weapon="Hand-spear") elungcondition[en]=elungcondition[en]+hitdam
+          Endif
+          Else addnews="You missed the "+enemy[en]+" with your "+weapon+"!"
+          Do ne=11,1
+            news[ne]=news[ne-1]
+          Loop
+          news[0]=addnews
+          breakw=random(40)
+          If (breakw=0 And weapon!="") 
+            If (hand1=weapon) hand1=""; addnews="You broke your "+weapon+"!"
+            If (hand2=weapon) hand2=""; addnews="You broke your "+weapon+"!"
+            Do ne=11,1
+              news[ne]=news[ne-1]
+            Loop
+            news[0]=addnews
+          Endif
+          nextturn=nextturn+2
+        Endif
+      Endif
+     Endif
+     Endif
+    Endif
+   
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Pick up Enemy
+    If (z=2 And edead[en]=1 And mrecharge<=0)
+     If (x<(ex[en]-playerx)*size+size+xpixels()/2-1 And x>(ex[en]-playerx)*size+xpixels()/2 And shadow[ex[en]+ey[en]*129]=1)
+     If (y<(ey[en]-playery)*size+size+ypixels()/2-1 And y>(ey[en]-playery)*size+ypixels()/2)
+      If ((playerx=ex[en]-1 And playery=ey[en]) Or (playerx=ex[en]+1 And playery=ey[en]) Or (playery=ey[en]-1 And playerx=ex[en]) Or (playery=ey[en]+1 And playerx=ex[en]))
+        mrecharge=15; draggingnowcheck=0
+        If (dragging=0)
+          dragging=1; enemydrag=en; draggingnowcheck=1
+          addnews="You start dragging the "+enemy[en]+""
+          Do ne=11,1
+            news[ne]=news[ne-1]
+          Loop
+          news[0]=addnews
+        Endif
+        If (dragging=1 And draggingnowcheck=0)
+          dragging=0
+          addnews="You stop dragging the "+enemy[en]+""
+          Do ne=11,1
+            news[ne]=news[ne-1]
+          Loop
+          news[0]=addnews
+        Endif
+      Endif
+     Endif
+     Endif
+    Endif
+    If (dragging=1 And en=enemydrag)
+      ex[en]=oldposx; ey[en]=oldposy
+    Endif
+
+  Loop
+ 
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Suicide
+  If (key=83 And dead=0)
+    addnews=""
+    Do
+      select screen(1); key=readkey(); n=0; forecolor(White)
+      solidcolor(Black);solidrectangle(0,0,xpixels()-400,300)
+      If(feetcondition>=50) forecolor(Darkred)
+      outtextxy(20,20+15*n,"2-Feet");n=n+1; forecolor(White)
+      If(hand2condition>=50) forecolor(Darkred)
+      outtextxy(20,20+15*n,"4-Left hand");n=n+1; forecolor(White)
+      If(bodycondition>=129) forecolor(Darkred)
+      outtextxy(20,20+15*n,"5-Body");n=n+1; forecolor(White)
+      If(hand1condition>=50) forecolor(Darkred)
+      outtextxy(20,20+15*n,"6-Right Hand");n=n+1; forecolor(White)
+      If(headcondition>=50) forecolor(Darkred)
+      outtextxy(20,20+15*n,"8-Head");n=n+1; forecolor(White)
+      If(throatcondition>=50) forecolor(Darkred)
+      outtextxy(20,20+15*n,"9-Throat");n=n+1; forecolor(White)
+      outtextxy(20,20+15*n,"0-Back");n=n+1
+      If (key=50 And feetcondition<50) bodypart="Feet";Break       
+      If (key=52 And hand2condition<50) bodypart="Left hand";Break
+      If (key=54 And hand1condition<50) bodypart="Right hand";Break  
+      If (key=53 And bodycondition<129) bodypart="Body";Break
+      If (key=56 And headcondition<50) bodypart="Head";Break
+      If (key=57 And throatcondition<50) bodypart="Throat";Break
+      If (key=48) Goto nevermind
+      selectscreen(0);bitbltscreen(1);Delay(10)
+    Loop
+    defhand1=hand1; defhand2=hand2
+    If (defhand1="") defhand1="Fist"
+    If (defhand2="") defhand2="Fist"
+    Do
+      select screen(1); key=readkey(); n=0; forecolor(White)
+      solidcolor(Black);solidrectangle(0,0,xpixels()-400,300)
+      If (hand2condition>=35) forecolor(Darkred)
+      outtsay="4-Attack with "+defhand2+"";outtextxy(20,20+15*n,outtsay);n=n+1;forecolor(White)
+      If (hand1condition>=35) forecolor(Darkred)
+      outtsay="6-Attack with "+defhand1+"";outtextxy(20,20+15*n,outtsay);n=n+1;forecolor(White)
+      outtextxy(20,20+15*n,"0-Back");n=n+1
+      If (key=54 And hand1condition<35) weapon=defhand1;Break
+      If (key=52 And hand2condition<35) weapon=defhand2;Break
+      If (key=48) Goto nevermind
+      selectscreen(0);bitbltscreen(1);Delay(10)
+    Loop
+
+    If (weapon="Fist") hitdam=random(4)+1
+    If (weapon="Hand-sword") hitdam=random(swords/2)+swords+4; expswords=expswords+1
+    If (weapon="Hand-axe") hitdam=random(axes/2)+axes+5; expaxes=expaxes+1
+    If (weapon="Hand-spear") hitdam=random(spears/6)+spears; expspears=expspears+1
+
+    If (bodypart="Left hand") hand2condition=hand2condition+hitdam; expdefence=expdefence+1
+    If (bodypart="Right hand") hand1condition=hand1condition+hitdam; expdefence=expdefence+1
+
+    If (bodypart="Feet" And shoes="Shoes-ironshoes" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+    If (bodypart="Feet" And shoes="Shoes-steelshoes" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+    If (bodypart="Body" And body="Armor-ironarmor" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+    If (bodypart="Body" And body="Armor-steelarmor" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+    If (bodypart="Head" And helmet="Helm-ironhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+    If (bodypart="Head" And helmet="Helm-steelhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+    If (bodypart="Throat" And helmet="Helm-ironhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence; expdefence=expdefence+1
+    If (bodypart="Throat" And helmet="Helm-steelhelm" And weapon!="Fist" And weapon!="Kick") hitdam=hitdam-defence-2; expdefence=expdefence+1
+
+    If (hitdam<=2) hitdam=random(2)+1
+
+    If (bodypart="Feet") feetcondition=feetcondition+hitdam
+    If (bodypart="Body") bodycondition=bodycondition+hitdam
+    If (bodypart="Head") headcondition=headcondition+hitdam
+    If (bodypart="Throat") throatcondition=throatcondition+hitdam
+
+    enx=random(3)-1;eny=random(3)-1
+    If (dropitem[(playerx+enx)+(playery+eny)*129]="") 
+      dropitem[(playerx+enx)+(playery+eny)*129]="Human-blood"
+    Endif
+
+
+    If (hand1condition>=35 And hand1!="") enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=hand1; hand1=""
+    If (hand2condition>=35 And hand2!="") enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=hand2; hand2=""
+    If (feetcondition>=50 And bodypart="Feet") 
+     Do feetloop=0,1
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(playerx+throwx)+(playery+throwy)*129]="") 
+          dropitem[(playerx+throwx)+(playery+throwy)*129]="Human-blood"
+        Endif
+        If (type[(playerx+throwx)+(playery+throwy)*129]=0) dropitem[(playerx+hitwallx)+(playery+hitwally)*129]="Severed-foot";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(playerx+throwx)+(playery+throwy)*129]="Severed-foot"; 
+      enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=shoes; shoes=""
+     Loop
+    Endif 
+    If ((hand2condition>=50 And bodypart="Left hand") Or (hand1condition>=50 And bodypart="Right hand"))
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(playerx+throwx)+(playery+throwy)*129]="") 
+          dropitem[(playerx+throwx)+(playery+throwy)*129]="Human-blood"
+        Endif
+        If (type[(playerx+throwx)+(playery+throwy)*129]=0) dropitem[(playerx+hitwallx)+(playery+hitwally)*129]="Severed-hand";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(playerx+throwx)+(playery+throwy)*129]="Severed-hand"; 
+    Endif 
+    If (throatcondition>=50 And bodypart="Throat")
+      throwrun=random(2); If (throwrun=0) throwrun=-1
+      throwrise=random(2); If (throwrise=0) throwrise =-1
+      throwx=0; throwy=0; alreadysevered=0; throwdx=random(view)+1; throwdy=random(view)+1; ttx=0; tty=0; distance=(random(view)+1)*3
+      Do ru=0,distance
+        ttx=ttx+1; If (ttx>=throwdx) throwx=throwx+throwrun; ttx=0
+        tty=tty+1; If (tty>=throwdy) throwy=throwy+throwrise; tty=0
+        If (dropitem[(playerx+throwx)+(playery+throwy)*129]="") 
+          dropitem[(playerx+throwx)+(playery+throwy)*129]="Human-blood"
+        Endif
+        If (type[(playerx+throwx)+(playery+throwy)*129]=0) dropitem[(playerx+hitwallx)+(playery+hitwally)*129]="Severed-head";alreadysevered=1; Break 
+        hitwallx=throwx; hitwally=throwy
+      Loop
+      If (alreadysevered=0) dropitem[(playerx+throwx)+(playery+throwy)*129]="Severed-head"; 
+      enx=random(3)-1;eny=random(3)-1; dropitem[(playerx+enx)+(playery+eny)*129]=helmet; helmet=""
+    Endif 
+
+    alreadysevered=0
+    addnews="You hit yourself in the "+bodypart+" with your "+weapon+"!"
+    If ((weapon="Hand-sword" Or "Hand-axe") And hitdam>10) bleeding=bleeding+hitdam
+    If (weapon="Hand-spear") bleeding=bleeding+hitdam+3
+    If (bodypart="Body" And hitdam>5) lungcondition=lungcondition+hitdam-5
+    If (bodypart="Body" And weapon="Hand-spear") lungcondition=lungcondition+hitdam
+    Do ne=11,1
+      news[ne]=news[ne-1]
+    Loop
+    news[0]=addnews
+    nextturn=nextturn+2
+  Endif 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Inventory
+  If (headcondition<50 And throatcondition<50)  solidcolor(White); solidrectangle(279,59,306,86) ;solidcolor(Black); solidrectangle(280,60,305,85);  outtextxy(276,87,"Head") //helm
+  If (feetcondition<35)  solidcolor(White); solidrectangle(279,209,306,236) ;solidcolor(Black); solidrectangle(280,210,305,235);  outtextxy(276,190,"Feet") //shoes
+  If (bodycondition<129) solidcolor(White); solidrectangle(279,134,306,161) ;solidcolor(Black); solidrectangle(280,135,305,160);  outtextxy(275,115,"Body") //body
+  If (hand1condition<35) solidcolor(White); solidrectangle(314,134,341,161) ;solidcolor(Black); solidrectangle(315,135,340,160);  outtextxy(311,164,"Hand") //righthand (hand1)
+  If (hand2condition<35) solidcolor(White); solidrectangle(244,134,271,161) ;solidcolor(Black); solidrectangle(245,135,270,160);  outtextxy(241,164,"Hand") //lefthand (hand2)
+  
+  If (z=1 And x<305 And x>280 And y<85 And y>60 And mrecharge<=0 And headcondition<50)
+    armorplace=Extract(mitem,0,3)
+    If (armorplace="Helm" Or mitem="") changeitem=helmet; helmet=mitem; mitem=changeitem; mrecharge=15
+  Endif
+  If (z=1 And x<305 And x>280 And y<235 And y>210 And mrecharge<=0  And feetcondition<50)
+    armorplace=Extract(mitem,0,4)
+    If (armorplace="Shoes" Or mitem="")  changeitem=shoes; shoes=mitem; mitem=changeitem; mrecharge=15
+  Endif
+  If (z=1 And x<305 And x>280 And y<160 And y>135 And mrecharge<=0  And bodycondition<129)
+    armorplace=Extract(mitem,0,4)
+    If (armorplace="Armor" Or mitem="") changeitem=body; body=mitem; mitem=changeitem; mrecharge=15
+  Endif
+  If (z=1 And x<340 And x>315 And y<160 And y>135 And mrecharge<=0  And hand1condition<35)
+    armorplace=Extract(mitem,0,3)
+    If (armorplace="Hand" Or mitem="") changeitem=hand1; hand1=mitem; mitem=changeitem; mrecharge=15
+  Endif
+  If (z=1 And x<270 And x>245 And y<160 And y>135 And mrecharge<=0  And hand2condition<35)
+    armorplace=Extract(mitem,0,3)
+    If (armorplace="Hand" Or mitem="") changeitem=hand2; hand2=mitem; mitem=changeitem; mrecharge=15
+  Endif
+
+
+  Call invitem(280,60,helmet,3,0)@
+  Call invitem(280,135,body,3,0)@
+  Call invitem(280,210,shoes,3,0)@
+  Call invitem(315,135,hand1,3,0)@
+  Call invitem(245,135,hand2,3,0)@
+
+  n=0
+  outtextxy(355,60+15*n,"Swords");outtextxy(520,60+15*n,itot(swords));n=n+1
+  outtextxy(355,60+15*n,"Axes");outtextxy(520,60+15*n,itot(axes));n=n+1
+  outtextxy(355,60+15*n,"Spears");outtextxy(520,60+15*n,itot(spears));n=n+1
+  outtextxy(355,60+15*n,"Archery");outtextxy(520,60+15*n,itot(archery));n=n+1
+  outtextxy(355,60+15*n,"Defence");outtextxy(520,60+15*n,itot(defence));n=n+1
+  outtextxy(355,60+15*n,"Dodge Chance");outtextxy(520,60+15*n,itot(dodgechance));n=n+1
+  outtextxy(355,60+15*n,"Block Chance");outtextxy(520,60+15*n,itot(blockchance));n=n+1
+
+ 
+  m=0
+  Do n=0,5
+    Do nn=0,5 
+      solidcolor(White); solidrectangle(59+n*30,59+nn*30,86+n*30,86+nn*30)
+      solidcolor(Black); solidrectangle(60+n*30,60+nn*30,85+n*30,85+nn*30)
+      Call invitem(60+n*30,60+nn*30,inv[m],0,0)@
+      m=m+1
+    Loop
+  Loop
+  m=0
+  Do n=0,5
+    Do nn=0,5
+      If (z=1 And x<85+n*30 And x>60+n*30 And y<85+nn*30 And y>60+nn*30 And mrecharge<=0) 
+        changeitem=inv[m]; inv[m]=mitem; mitem=changeitem; mrecharge=15
+      Endif
+      Call invitem(60+n*30,60+nn*30,inv[m],1,0)@
+      m=m+1
+    Loop
+  Loop
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Right Status HUD/Condition Problems
+  solidcolor(Black)
+  If (nextturn>=1 And bleeding>=1) 
+    bleeding=bleeding-2;bloodloss=bloodloss+4; 
+    If (dropitem[playerx+playery*129]="")
+      dropitem[playerx+playery*129]="Human-blood"
+    Endif
+  Endif
+  If (nextturn>=1 And bloodloss>=1 And dead=0) bloodloss=bloodloss-1
+  If (nextturn>=1 And lungcondition+throatcondition>=50 And dead=0) breathcondition=breathcondition+1
+  n=0
+  outtextxy(xpixels()-290,30+15*n,"Stage"); outtextxy(xpixels()-230,30+15*n,itot(stage)); n=n+2
+  If (stance=0) outtextxy(xpixels()-290,30+15*n,"You are standing"); n=n+1
+  If (stance=1) outtextxy(xpixels()-290,30+15*n,"On the Ground"); n=n+1
+  If (stance=2) forecolor(Darkred); outtextxy(xpixels()-290,30+15*n,"Lost ability to stand"); n=n+1;forecolor(White)
+  n=n+1
+  If (bleeding>=1 And bleeding<10) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"You are bleeding"); n=n+1;forecolor(White)
+  If (bleeding>=10 And bleeding<20) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"You are bleeding badly"); n=n+1;forecolor(White)
+  If (bleeding>=20) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"You are bleeding horribly"); n=n+1;forecolor(White)
+  If (bloodloss>=1 And bloodloss<129) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"You lost blood"); n=n+1;forecolor(White)
+  If (bloodloss>=129 And bloodloss<200) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"You lost a lot of blood"); n=n+1;forecolor(White)
+  If (bloodloss>=200) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Bled out"); n=n+1;forecolor(White); dead=1
+  If (headcondition>=5 And headcondition<20) forecolor(White);outtextxy(xpixels()-290,30+15*n,"Head is bruised"); n=n+1;forecolor(White)
+  If (headcondition>=20 And headcondition<35) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"Head is badly hurt"); n=n+1;forecolor(White)
+  If (headcondition>=35 And headcondition<50) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"Head is mortally injured"); n=n+1;forecolor(White)
+  If (headcondition>=50) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Head is smashed apart"); n=n+1;forecolor(White); dead=1
+  If (hand1condition>=5 And hand1condition<20) forecolor(White);outtextxy(xpixels()-290,30+15*n,"Right hand is bruised"); n=n+1;forecolor(White)
+  If (hand1condition>=20 And hand1condition<35) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"Right hand is badly hurt"); n=n+1;forecolor(White)
+  If (hand1condition>=35 And hand1condition<50) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"Right hand is broken"); n=n+1;forecolor(White)
+  If (hand1condition>=50) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Right hand is severed"); n=n+1;forecolor(White)
+  If (hand2condition>=5 And hand2condition<20) forecolor(White);outtextxy(xpixels()-290,30+15*n,"Left hand is bruised"); n=n+1;forecolor(White)
+  If (hand2condition>=20 And hand2condition<35) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"Left hand is badly hurt"); n=n+1;forecolor(White)
+  If (hand2condition>=35 And hand2condition<50) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"Left hand is broken"); n=n+1;forecolor(White)
+  If (hand2condition>=50) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Left hand is severed"); n=n+1;forecolor(White)
+  If (feetcondition>=5 And feetcondition<20) forecolor(White);outtextxy(xpixels()-290,30+15*n,"Feet are bruised"); n=n+1;forecolor(White)
+  If (feetcondition>=20 And feetcondition<35) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"Feet are badly hurt"); n=n+1;forecolor(White);
+  If (feetcondition>=35 And feetcondition<50) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"Feet are broken"); n=n+1;forecolor(White); stance=2
+  If (feetcondition>=50) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Feet are severed"); n=n+1;forecolor(White); stance=2
+  If (bodycondition>=5 And bodycondition<20) forecolor(White);outtextxy(xpixels()-290,30+15*n,"Body is bruised"); n=n+1;forecolor(White)
+  If (bodycondition>=20 And bodycondition<35) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"Body is badly hurt"); n=n+1;forecolor(White)
+  If (bodycondition>=35 And bodycondition<129) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"Body is mortally injured"); n=n+1;forecolor(White)
+  If (bodycondition>=129) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Body is mangled"); n=n+1;forecolor(White); dead=1
+  If (lungcondition>=5 And lungcondition<35) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"Lungs are bruised"); n=n+1;forecolor(White)
+  If (lungcondition>=35 And lungcondition<50) forecolor(Orange); outtextxy(xpixels()-290,30+15*n,"Lungs are badly hurt"); n=n+1;forecolor(White)
+  If (lungcondition>=50) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Lungs are torn up"); n=n+1;forecolor(White)
+  If (throatcondition>=5 And throatcondition<35) forecolor(Yellow);outtextxy(xpixels()-290,30+15*n,"Throat is bruised"); n=n+1;forecolor(White)
+  If (throatcondition>=35 And throatcondition<50) forecolor(Orange);outtextxy(xpixels()-290,30+15*n,"Throat is badly hurt"); n=n+1;forecolor(White)
+  If (throatcondition>=50) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"Decapitated"); n=n+1;forecolor(White); dead=1
+  If (breathcondition>=1 And breathcondition<50) forecolor(Darkred);outtextxy(xpixels()-290,30+15*n,"You cannot breath"); n=n+1;forecolor(White)
+  If (breathcondition>=50) forecolor(Darkred); outtextxy(xpixels()-290,30+15*n,"You have suffocated"); n=n+1;forecolor(White); dead=1
+  n=n+1;
+  If (dead=1) forecolor(Darkred); outtextxy(xpixels()-290,30+15*n,"You are Dead"); forecolor(White)
+  
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Dropping Items/Mouse Items
+  //drop on player
+  If (z=1 And x<xpixels()/2+size And x>xpixels()/2 And y<ypixels()/2+size And y>ypixels()/2 And mrecharge<=0)
+    Do n=0,35
+      If (inv[n]="") inv[n]=mitem; mitem=""; Break
+    Loop
+    mrecharge=10
+  Endif
+  //drop right of player
+  If (z=1 And x<xpixels()/2+size+size And x>xpixels()/2+size And y<ypixels()/2+size And y>ypixels()/2 And mrecharge<=0 And attenemy=0)
+    Do n=0,16640
+      If (xx[n]=playerx+1 And yy[n]=playery) changeitem=dropitem[n]; dropitem[n]=mitem; mitem=changeitem;mrecharge=15;Break
+    Loop    
+  Endif
+  //drop left of player
+  If (z=1 And x<xpixels()/2+size-size And x>xpixels()/2-size And y<ypixels()/2+size And y>ypixels()/2 And mrecharge<=0 And attenemy=0)
+    Do n=0,16640
+      If (xx[n]=playerx-1 And yy[n]=playery) changeitem=dropitem[n]; dropitem[n]=mitem; mitem=changeitem;mrecharge=15;Break
+    Loop    
+  Endif
+  //drop top of player
+  If (z=1 And x<xpixels()/2+size And x>xpixels()/2 And y<ypixels()/2+size-size And y>ypixels()/2-size And mrecharge<=0 And attenemy=0)
+    Do n=0,16640 
+      If (xx[n]=playerx And yy[n]=playery-1) changeitem=dropitem[n]; dropitem[n]=mitem; mitem=changeitem;mrecharge=15;Break
+    Loop    
+  Endif
+  //drop bottom of player
+  If (z=1 And x<xpixels()/2+size And x>xpixels()/2 And y<ypixels()/2+size+size And y>ypixels()/2+size And mrecharge<=0 And attenemy=0)
+    Do n=0,16640
+      If (xx[n]=playerx And yy[n]=playery+1) changeitem=dropitem[n]; dropitem[n]=mitem; mitem=changeitem;mrecharge=15;Break
+    Loop
+  Endif
+  
+  Call invitem(x-12,y-12,mitem,3,0)@
+ 
+
+  ////////////////////////Ect
+  If (mrecharge>0) mrecharge=mrecharge-1 
+  rplayerx=playerx; rplayery=playery
+  Do ne=0,11
+    outtextxy(50,ypixels()-50-15*ne,news[ne])
+  Loop
+  //If (z=3) Goto resetmap
+  If (key=27)
+     If (querybox("Do you really want to quit?")) Break
+  Endif
+  selectscreen(0)
+  bitbltscreen(1)
+Loop
+
+exit:
+close blt (imb)
+close image (imi)
+quit
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Tasks
+ 
+////////////////////////Items
+Task invitem(Floata,Floatb,Textitem,Intname,Intsize)
+If (size!=0) size=size-26
+If (item="Human-blood") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 0,250); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Blood")
+If (item="Severed-hand") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 25,250); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Severed Hand")
+If (item="Severed-foot") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 50,250); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Severed Foot")
+If (item="Severed-head") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 75,250); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Severed Head")
+
+If (item="Hand-sword") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 0,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Sword")
+If (item="Hand-axe") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 25,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Axe")
+If (item="Hand-spear") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 50,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Spear")
+
+If (item="Helm-ironhelm") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 75,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Copper Helm")
+If (item="Helm-steelhelm") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 100,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Steel Helm")
+
+If (item="Shoes-ironshoes") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 125,200); If (x>a And x<a+25+size And y>b And y<b+25+size And name=1) Outtextxy(x+10,y+10,"Copper Shoes")
+If (item="Shoes-steelshoes") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 150,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Steel Shoes")
+
+If (item="Armor-ironarmor") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 175,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Copper Armor")
+If (item="Armor-steelarmor") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 200,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Steel Armor")
+
+If (item="Hand-crossbow") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 225,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Crossbow")
+If (item="Hand-IronBolt") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 250,200); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Copper Bolt")
+
+
+If (item="Glass") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 150,0); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Glass")
+If (item="Wooden Wall") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 129,0); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Wooden Wall ")
+If (item="Wooden Floor") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 125,0); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Wooden Floor")
+If (item="Door") ; If (name=0 Or name=3) bitblt(imb, a,b, 25,25, 175,0); If (x>a And x<a+25+size And y>b And y<b+25+size And (name=1 Or name=3)) Outtextxy(x+10,y+10,"Door")
+Return

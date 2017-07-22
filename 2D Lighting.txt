@@ -1,0 +1,83 @@
+Win(null)
+
+///////////////////Variables
+Int xx[10000]
+Int yy[10000]
+Int shadow[10000]
+//0=unfound 1=found
+Int type[10000]
+//0=Wall  1=Ground 
+
+x=0; y=0; z=0;
+playerx=50; playery=50
+size=10
+view=50
+rechargesize=0
+
+////////////////Random Map
+Do n=0,9999
+  type[n]=0
+  shadow[n]=0
+  xx[n]=(n%100)
+  yy[n]=((n)/100)
+  If (xx[n]>=10 And xx[n]<=90 And yy[n]>=10 And yy[n]<=90) type[n]=1
+  If (xx[n]>=60 And xx[n]<=75 And yy[n]>=40 And yy[n]<=70) type[n]=0
+  If (xx[n]>=30 And xx[n]<=50 And yy[n]>=35 And yy[n]<=45) type[n]=0
+Loop
+
+//////////////Gameplay
+Do
+  select screen(1)
+  cls
+  key=readkey()
+  readmouse(x,y,z)
+  ////////////Movement
+  If (z=4 And rechargesize<=0)
+    size=size+1
+    If (size>21) size=1
+    rechargesize=1
+  Endif
+  If (rechargesize>=1) rechargesize=rechargesize-1
+  If (key=328) playery=playery-1
+  If (key=336) playery=playery+1
+  If (key=333) playerx=playerx+1
+  If (key=331) playerx=playerx-1
+
+  /////////////tiles
+  Do n=0,9999
+
+    shadow[n]=1
+    rx=playerx-xx[n]
+    ry=playery-yy[n]
+    rc=sqrt(rx*rx+ry*ry)
+    If (rc>view) shadow[n]=0
+    If (rc<=view)
+      rxx=rx; ryy=ry
+      shadow[n]=1
+      Do d=0.0,view-1
+        ry=ryy; rx=rxx
+        ry=ry*(d/view); rx=rx*(d/view)
+        If (type[playerx-rx+(playery-ry)*100]=0)
+          shadow[n]=0;Break
+        Endif
+      Loop
+    Endif
+
+    If (shadow[n]!=0)
+      If (type[n]=0) solidcolor(Blue)
+      If (type[n]=1) solidcolor(Gray)
+    Endif
+    Else solidcolor(Black)
+    solidrectangle(xx[n]*size,yy[n]*size,xx[n]*size+size,yy[n]*size+size)
+    solidcolor(Orange)
+    solidrectangle(playerx*size,playery*size,playerx*size+size,playery*size+size)
+  Loop
+  
+  If (key=27) Goto exit
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(1)
+Loop
+
+exit:
+quit

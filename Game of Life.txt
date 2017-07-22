@@ -1,0 +1,121 @@
+Win(null)
+Int xx[2500]
+Int yy[2500]
+Int cell[2500]
+Int savecell[2500]
+Do n=0,2499
+  cell[n]=0
+  savecell[n]=0
+Loop
+Do n=0,2499
+  xx[n]=(n%50)*15
+  yy[n]=((n)/50)*15
+Loop
+del=3
+aod=0
+run=2
+move=0
+wait=0
+dspeed=300
+mx=0
+my=0
+mz=0
+
+Display "  The SiMPLE version of John Conway's Game of Life!"
+Display "  Left click to add live cells"
+Display "  Right click the mouse to delete cells"
+Display "  To pause/unpause the cell movement, press the right and left mouse buttons at the same time"
+Display "  To change game speed, press Mouse 3(the scrolls wheel)"
+Display "  To reset all the cells to 'dead', press the Space key"
+Display "  "
+Display "  Rule of the Game:"
+Display "  Each square is a 'cell'"
+Display "  A cell can either be alive, or dead"
+Display "  If a cell has 1 or less neighbors, it will die, due to lonelyness"
+Display "  If a cell has 4 or more neighbors, it will die, due to overcrowding"
+Display "  If a cell has 2 or 3 neighbors, it will remain alive for the next generation"
+Display "  For dead cells, if there are 3 neighbors, it will turn alive"
+Display "  "
+Display "  Press any key to continue..."
+waitkey()
+
+Do
+  select screen(1)
+  cls
+  readmouse(mx,my,mz)
+  key=readkey()
+  solidcolor(Black)
+  color(White)
+  solidcolor(Gray)
+  solidrectangle(0,0,50*15,50*15)
+  Do n=0,50
+    line(0,n*15,50*15,n*15)
+    line(n*15,0,n*15,50*15)  
+  Loop
+  solidcolor(Black)
+  If (move>=1) move=move-1
+  If (run=1 And move<=0)
+    Do n=0,2499
+      aod=0
+      If (cell[n+1]=1) aod=aod+1
+      If (cell[n-1]=1) aod=aod+1
+      If (cell[n+50]=1) aod=aod+1
+      If (cell[n-50]=1) aod=aod+1
+      If (cell[n+50+1]=1) aod=aod+1
+      If (cell[n+50-1]=1) aod=aod+1
+      If (cell[n-50+1]=1) aod=aod+1
+      If (cell[n-50-1]=1) aod=aod+1
+
+      If (aod<=1) savecell[n]=0
+      If (aod>=4) savecell[n]=0
+      If (aod=2 And cell[n]=1) savecell[n]=1
+      If (aod=3) savecell[n]=1
+    Loop
+    move=del*20+10
+  Endif
+  Do n=0,2499
+    cell[n]=savecell[n]
+    If (cell[n]=1) solidrectangle(xx[n],yy[n],xx[n]+15,yy[n]+15)
+  Loop
+  color(Red)
+  mxx=mx; myy=my
+  mxx=mxx/15; myy=myy/15
+  mxx=mxx*15; myy=myy*15
+  If (mxx/15<50 And myy/15<50)rectangle(mxx,myy,mxx+15,myy+15)
+  If (mz=1 And mxx/15<50 And myy/15<50) 
+    x=mxx/15
+    y=myy/15*50
+    savecell[x+y]=1
+  Endif
+  If (mz=2 And mxx/15<49 And myy/15<49) 
+    x=mxx/15
+    y=myy/15*50
+    savecell[x+y]=0
+  Endif
+  If (wait>=1) wait=wait-1
+  If (mz=3 And wait<1) run=3-run; wait=30
+  If (mz=4 And wait<1) 
+    If (del>=1)del=del-1
+    Else del=5
+    wait=30; dspeed=300
+  Endif
+  If (run=2) Display "Paused-Click the right and left mouse buttons at the same time to unpause"
+  If (dspeed>=1) 
+    Display "Cell Speed:"
+    Display del  
+    dspeed=dspeed-1
+  Endif
+  If (key=27) Goto exit
+  If (key=Space)
+    Do n=0,2499
+      savecell[n]=0
+      cell[n]=0
+    Loop
+  Endif
+  selectscreen(0)
+  bitbltscreen(1)
+  Delay(1)
+Loop
+exit:
+quit
+
